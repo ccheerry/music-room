@@ -1,0 +1,41 @@
+# Dependencies / builds
+node_modules/
+build/
+dist/
+web-build/
+*.tsbuildinfo
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Expo / React Native
+.expo/
+expo-env.d.ts
+ios/
+android/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Tests / reports
+coverage/
+loadtest/reports/
+.maestro/screenshots/
+
+# Logs
+*.log
+npm-debug.log*
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
