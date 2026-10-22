@@ -1,0 +1,8 @@
+**/node_modules
+**/dist
+**/coverage
+**/src/generated
+.git
+.env
+apps/mobile/*
+!apps/mobile/package.json
