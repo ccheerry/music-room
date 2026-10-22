@@ -1,0 +1,10 @@
+node_modules
+dist
+coverage
+.expo
+**/src/generated
+package-lock.json
+*.md
+musicroom.pdf
+.claude
+expo-env.d.ts
