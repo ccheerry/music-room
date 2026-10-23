@@ -14,7 +14,6 @@ down:
 
 dev:
 	docker compose up -d postgres mailpit
-	# ponytail: api in background, expo keeps the TTY; Ctrl-C stops both
 	trap 'kill 0' INT; $(API) dev & npm -w @music-room/mobile run start
 
 migrate:

@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-22.04
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: musicroom
+          POSTGRES_PASSWORD: musicroom
+          POSTGRES_DB: musicroom
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U musicroom"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://musicroom:musicroom@localhost:5432/musicroom
+      NODE_ENV: test
+      LOG_LEVEL: silent
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run build -w @music-room/shared
+      - run: npx prisma generate
+        working-directory: apps/api
+      - run: npm run lint
+      - run: npm run typecheck --workspaces --if-present
+      - run: npx prisma migrate deploy
+        working-directory: apps/api
+      - run: npm test --workspaces --if-present
