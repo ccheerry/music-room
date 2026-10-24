@@ -4,7 +4,11 @@
 	"main": "expo-router/entry",
 	"dependencies": {
 		"@expo/ui": "~58.0.22",
+		"@music-room/shared": "^0.0.0",
+		"@react-native-async-storage/async-storage": "2.2.0",
+		"@tanstack/react-query": "^5.104.5",
 		"expo": "~58.0.17",
+		"expo-application": "~58.1.2",
 		"expo-constants": "~58.0.13",
 		"expo-device": "~58.0.5",
 		"expo-font": "~58.0.9",
@@ -25,10 +29,15 @@
 		"react-native-safe-area-context": "~5.10.1",
 		"react-native-screens": "~4.30.0",
 		"react-native-web": "~0.21.4",
-		"react-native-worklets": "0.13.0"
+		"react-native-worklets": "0.13.0",
+		"zustand": "^5.0.16"
 	},
 	"devDependencies": {
+		"@testing-library/react-native": "^14.1.0",
+		"@types/jest": "^30.0.0",
 		"@types/react": "~19.3.0",
+		"jest": "^30.5.2",
+		"jest-expo": "^58.0.12",
 		"typescript": "~6.0.3"
 	},
 	"scripts": {
@@ -36,8 +45,18 @@
 		"android": "expo start --android",
 		"ios": "expo start --ios",
 		"web": "expo start --web",
-		"lint": "expo lint",
-		"typecheck": "tsc --noEmit"
+		"typecheck": "tsc --noEmit",
+		"test": "jest"
 	},
-	"private": true
+	"private": true,
+	"jest": {
+		"preset": "jest-expo",
+		"moduleNameMapper": {
+			"\\.css$": "<rootDir>/test/css-stub.ts",
+			"^@/(.*)$": "<rootDir>/src/$1"
+		},
+		"setupFiles": [
+			"./test/setup.ts"
+		]
+	}
 }

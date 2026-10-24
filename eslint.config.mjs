@@ -1,6 +1,7 @@
 import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 import prettierRecommended from 'eslint-plugin-prettier/recommended';
+import reactHooks from 'eslint-plugin-react-hooks';
 
 export default tseslint.config(
 	{
@@ -18,6 +19,10 @@ export default tseslint.config(
 	// Formatting (tabs, width 4) comes from .prettierrc; any drift is a lint error.
 	prettierRecommended,
 	{ rules: { 'no-console': 'error' } },
+	{
+		files: ['apps/mobile/**/*.{ts,tsx}'],
+		...reactHooks.configs.flat.recommended,
+	},
 	{
 		files: ['apps/mobile/**/*.{js,cjs}'],
 		languageOptions: {

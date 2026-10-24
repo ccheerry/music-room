@@ -5,6 +5,5 @@ coverage
 **/src/generated
 package-lock.json
 *.md
-musicroom.pdf
 .claude
 expo-env.d.ts
