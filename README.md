@@ -164,18 +164,21 @@ Nothing is vendored: every library is downloaded by `make install`.
 ### Make targets
 
 ```bash
-make install    # npm ci for api, mobile and shared
-make up         # docker compose up -d
-make down       # docker compose down
-make dev        # api in watch mode + Expo
-make migrate    # apply Prisma migrations
-make seed       # demo data
-make test       # all test suites
-make lint       # eslint + tsc --noEmit
-make docs       # export openapi.json
-make mobile     # Expo dev server
-make loadtest   # Artillery scenarios
-make fclean     # remove containers, volumes, node_modules and builds
+make           # list every target (same as make help)
+make install   # install every workspace, build shared, generate the Prisma client
+make up        # start postgres, mailpit and the api in Docker
+make down      # stop the Docker stack
+make dev       # api in watch mode + Expo
+make migrate   # apply Prisma migrations
+make seed      # load demo data
+make test      # api and mobile test suites
+make lint      # eslint + prettier check + type check
+make format    # fix formatting
+make docs      # export openapi.json
+make mobile    # Expo dev server
+make loadtest  # Artillery scenarios
+make clean     # stop Docker and remove builds
+make fclean    # also remove volumes, local images and node_modules
 ```
 
 ### Environment
