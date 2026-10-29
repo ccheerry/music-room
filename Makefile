@@ -25,7 +25,8 @@ migrate: ## Apply Prisma migrations
 seed: ## Load demo data
 	cd apps/api && $(LOAD_ENV) && npx prisma db seed
 
-test: ## Run the api (Vitest) and mobile (jest-expo) tests
+test: ## Run the shared, api (Vitest) and mobile (jest-expo) tests
+	npm -w @music-room/shared test
 	cd apps/api && $(LOAD_ENV) && npx vitest run
 	npm -w @music-room/mobile test --if-present
 

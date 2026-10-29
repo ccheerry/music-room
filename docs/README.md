@@ -84,7 +84,7 @@ make down      # stop the Docker stack
 make dev       # api in watch mode + Expo
 make migrate   # apply Prisma migrations
 make seed      # load demo data
-make test      # api and mobile test suites
+make test      # shared, api and mobile test suites
 make lint      # eslint + prettier check + type check
 make format    # fix formatting
 make docs      # export openapi.json
