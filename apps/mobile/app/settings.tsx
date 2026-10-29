@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { StyleSheet, TextInput } from 'react-native';
+import { ScrollView, StyleSheet, TextInput } from 'react-native';
 
 import { checkHealth, type HealthStatus } from '@/api/client';
 import { Button } from '@/components/button';
@@ -43,7 +43,13 @@ export default function SettingsScreen() {
 	};
 
 	return (
-		<ThemedView style={styles.container}>
+		// automatic insets keep the content below the translucent iOS header
+		<ScrollView
+			contentInsetAdjustmentBehavior="automatic"
+			keyboardShouldPersistTaps="handled"
+			style={{ backgroundColor: theme.background }}
+			contentContainerStyle={styles.container}
+		>
 			<ThemedText type="smallBold">Backend address</ThemedText>
 			<TextInput
 				accessibilityLabel="Backend address"
@@ -79,12 +85,12 @@ export default function SettingsScreen() {
 					{message}
 				</ThemedText>
 			)}
-		</ThemedView>
+		</ScrollView>
 	);
 }
 
 const styles = StyleSheet.create({
-	container: { flex: 1, padding: Spacing.three, gap: Spacing.two },
+	container: { padding: Spacing.three, gap: Spacing.two },
 	input: {
 		...Typography.default,
 		borderRadius: Radius.small,
