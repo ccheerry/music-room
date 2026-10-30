@@ -66,4 +66,5 @@ export const AuthErrorCode = {
 	InvalidCredentials: 'INVALID_CREDENTIALS',
 	EmailNotVerified: 'EMAIL_NOT_VERIFIED',
 	InvalidToken: 'INVALID_TOKEN',
+	Unauthorized: 'UNAUTHORIZED',
 } as const;
