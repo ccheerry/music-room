@@ -41,9 +41,10 @@ export type AuthDeps = {
 	mailer: Mailer;
 	log: FastifyBaseLogger;
 	signAccess: (claims: AccessClaims) => string;
+	linkBase: string;
 };
 
-export function createAuthService({ prisma, mailer, log, signAccess }: AuthDeps) {
+export function createAuthService({ prisma, mailer, log, signAccess, linkBase }: AuthDeps) {
 	// A lost mail can be resent; it must not fail the request.
 	const send = async (mail: Mail) => {
 		try {
@@ -118,11 +119,11 @@ export function createAuthService({ prisma, mailer, log, signAccess }: AuthDeps)
 		const existing = await prisma.user.findUnique({ where: { email } });
 		if (existing) {
 			if (existing.emailVerifiedAt) return send(alreadyRegisteredMail(email));
-			return send(verifyMail(email, await issueEmailToken(existing.id, 'VERIFY')));
+			return send(verifyMail(email, await issueEmailToken(existing.id, 'VERIFY'), linkBase));
 		}
 		try {
 			const user = await prisma.user.create({ data: { email, passwordHash, displayName } });
-			await send(verifyMail(email, await issueEmailToken(user.id, 'VERIFY')));
+			await send(verifyMail(email, await issueEmailToken(user.id, 'VERIFY'), linkBase));
 		} catch (err) {
 			if (!isUniqueViolation(err)) throw err;
 		}
@@ -131,7 +132,7 @@ export function createAuthService({ prisma, mailer, log, signAccess }: AuthDeps)
 	async function resendVerification(email: string): Promise<void> {
 		const user = await prisma.user.findUnique({ where: { email } });
 		if (!user || user.emailVerifiedAt) return;
-		await send(verifyMail(email, await issueEmailToken(user.id, 'VERIFY')));
+		await send(verifyMail(email, await issueEmailToken(user.id, 'VERIFY'), linkBase));
 	}
 
 	async function verifyEmail(token: string): Promise<void> {
@@ -201,7 +202,7 @@ export function createAuthService({ prisma, mailer, log, signAccess }: AuthDeps)
 	async function forgotPassword(email: string): Promise<void> {
 		const user = await prisma.user.findUnique({ where: { email } });
 		if (!user) return;
-		await send(resetMail(email, await issueEmailToken(user.id, 'RESET')));
+		await send(resetMail(email, await issueEmailToken(user.id, 'RESET'), linkBase));
 	}
 
 	// Proves ownership of the email, so it also marks it verified.

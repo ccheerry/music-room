@@ -42,6 +42,7 @@ export async function buildApp({ env, prisma, mailer }: AppDeps): Promise<Fastif
 		mailer,
 		log: app.log,
 		signAccess: (claims) => app.jwt.sign(claims),
+		linkBase: env.APP_LINK_URL,
 	});
 	await app.register(healthRoutes(prisma), { prefix: API_PREFIX });
 	await app.register(authRoutes(auth), { prefix: API_PREFIX });

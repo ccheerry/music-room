@@ -12,6 +12,11 @@ const EnvSchema = z.object({
 	SMTP_HOST: z.string().default('localhost'),
 	SMTP_PORT: z.coerce.number().int().positive().default(1025),
 	MAIL_FROM: z.string().default('Music Room <no-reply@musicroom.local>'),
+	// Base of the links in mails; Expo Go needs exp://<lan-ip>:<port>/--/
+	APP_LINK_URL: z
+		.string()
+		.regex(/^[a-z][a-z0-9+.-]*:\/\/(.*\/)?$/i, 'scheme:// URL ending with /')
+		.default('musicroom://'),
 });
 export type Env = z.infer<typeof EnvSchema>;
 

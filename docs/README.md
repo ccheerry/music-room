@@ -61,6 +61,7 @@ Every variable is listed in `.env.example`. `.env` is git-ignored, and the API r
 | `JWT_SECRET` | Access token signature, at least 32 characters (`openssl rand -base64 48`) |
 | `SMTP_HOST` / `SMTP_PORT` | Mail server (Mailpit in development) |
 | `MAIL_FROM` | Sender of verification and reset mails |
+| `APP_LINK_URL` | Base of the links in mails: `musicroom://` for a build, `exp://<lan-ip>:8081/--/` for Expo Go |
 | `GOOGLE_CLIENT_IDS` | Accepted audiences for Google id tokens |
 | `FACEBOOK_APP_ID` / `FACEBOOK_APP_SECRET` | Facebook token verification |
 | `EXPO_PUBLIC_API_URL` | Default backend URL of the app |

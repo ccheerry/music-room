@@ -1,14 +1,14 @@
 import type { Mail } from '../../mail/mailer.js';
 
 // Templates only hold fixed text and URL-safe tokens: nothing to escape.
-const link = (path: 'verify' | 'reset', token: string) =>
-	`musicroom://${path}?token=${encodeURIComponent(token)}`;
+const link = (base: string, path: 'verify' | 'reset', token: string) =>
+	`${base}${path}?token=${encodeURIComponent(token)}`;
 
 const html = (text: string, url?: string) =>
 	`<p>${text}</p>${url ? `<p><a href="${url}">${url}</a></p>` : ''}`;
 
-export function verifyMail(to: string, token: string): Mail {
-	const url = link('verify', token);
+export function verifyMail(to: string, token: string, linkBase: string): Mail {
+	const url = link(linkBase, 'verify', token);
 	const text = 'Confirm your email to start using Music Room. The link expires in 24 hours.';
 	return {
 		to,
@@ -18,8 +18,8 @@ export function verifyMail(to: string, token: string): Mail {
 	};
 }
 
-export function resetMail(to: string, token: string): Mail {
-	const url = link('reset', token);
+export function resetMail(to: string, token: string, linkBase: string): Mail {
+	const url = link(linkBase, 'reset', token);
 	const text =
 		'Open this link to choose a new password. It expires in 1 hour. If you did not ask for it, ignore this mail.';
 	return {
