@@ -9,7 +9,8 @@ export type TestApp = { app: FastifyInstance; prisma: PrismaClient; mails: Mail[
 
 // Real Postgres, fake mailer that keeps every message in memory.
 export async function buildTestApp(): Promise<TestApp> {
-	const env = loadEnv({ ...process.env, LOG_LEVEL: 'silent' });
+	// Fixed link base: the local .env may point mails at Expo Go.
+	const env = loadEnv({ ...process.env, LOG_LEVEL: 'silent', APP_LINK_URL: 'musicroom://' });
 	const prisma = createPrisma(env.DATABASE_URL);
 	const mails: Mail[] = [];
 	const mailer = { send: async (mail: Mail) => void mails.push(mail) };
