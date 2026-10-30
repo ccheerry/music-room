@@ -58,8 +58,9 @@ Every variable is listed in `.env.example`. `.env` is git-ignored, and the API r
 | Variable | Purpose |
 |---|---|
 | `DATABASE_URL` | PostgreSQL connection |
-| `JWT_SECRET` | Access token signature |
+| `JWT_SECRET` | Access token signature, at least 32 characters (`openssl rand -base64 48`) |
 | `SMTP_HOST` / `SMTP_PORT` | Mail server (Mailpit in development) |
+| `MAIL_FROM` | Sender of verification and reset mails |
 | `GOOGLE_CLIENT_IDS` | Accepted audiences for Google id tokens |
 | `FACEBOOK_APP_ID` / `FACEBOOK_APP_SECRET` | Facebook token verification |
 | `EXPO_PUBLIC_API_URL` | Default backend URL of the app |

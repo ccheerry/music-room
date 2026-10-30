@@ -1,23 +1,18 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
-import { buildApp } from '../src/app.js';
 import { loadEnv } from '../src/config/env.js';
-import { createPrisma, type PrismaClient } from '../src/db.js';
+import { buildTestApp, closeTestApp, type TestApp } from './helpers.js';
 
 describe('GET /api/v1/health', () => {
+	let t: TestApp;
 	let app: FastifyInstance;
-	let prisma: PrismaClient;
 
 	beforeAll(async () => {
-		const env = loadEnv({ ...process.env, LOG_LEVEL: 'silent' });
-		prisma = createPrisma(env.DATABASE_URL);
-		app = await buildApp(env, prisma);
+		t = await buildTestApp();
+		app = t.app;
 	});
 
-	afterAll(async () => {
-		await app.close();
-		await prisma.$disconnect();
-	});
+	afterAll(() => closeTestApp(t));
 
 	it('reports ok when the database answers', async () => {
 		const res = await app.inject({ method: 'GET', url: '/api/v1/health' });
@@ -35,5 +30,11 @@ describe('GET /api/v1/health', () => {
 describe('loadEnv', () => {
 	it('throws when DATABASE_URL is missing', () => {
 		expect(() => loadEnv({})).toThrow(/DATABASE_URL/);
+	});
+
+	it('throws when JWT_SECRET is missing or too short', () => {
+		const base = { DATABASE_URL: 'postgresql://u:p@localhost:5432/db' };
+		expect(() => loadEnv(base)).toThrow(/JWT_SECRET/);
+		expect(() => loadEnv({ ...base, JWT_SECRET: 'short' })).toThrow(/JWT_SECRET/);
 	});
 });

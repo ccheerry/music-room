@@ -26,6 +26,7 @@ jobs:
       DATABASE_URL: postgresql://musicroom:musicroom@localhost:5432/musicroom
       NODE_ENV: test
       LOG_LEVEL: silent
+      JWT_SECRET: ci-only-secret-not-used-anywhere-else
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

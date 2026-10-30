@@ -8,6 +8,10 @@ const EnvSchema = z.object({
 		.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])
 		.default('info'),
 	DATABASE_URL: z.url(),
+	JWT_SECRET: z.string().min(32),
+	SMTP_HOST: z.string().default('localhost'),
+	SMTP_PORT: z.coerce.number().int().positive().default(1025),
+	MAIL_FROM: z.string().default('Music Room <no-reply@musicroom.local>'),
 });
 export type Env = z.infer<typeof EnvSchema>;
 

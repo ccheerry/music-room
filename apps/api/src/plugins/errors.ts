@@ -4,6 +4,12 @@ import type { ErrorBody } from '@music-room/shared';
 
 const body = (code: string, message: string): ErrorBody => ({ error: { code, message } });
 
+export type HttpError = Error & { statusCode: number; code: string };
+
+export function httpError(statusCode: number, code: string, message: string): HttpError {
+	return Object.assign(new Error(message), { statusCode, code });
+}
+
 // Every error leaves as { error: { code, message } }; 5xx details stay in the logs.
 export function registerErrorHandlers(app: FastifyInstance): void {
 	app.setErrorHandler((err: FastifyError, req, reply) => {
