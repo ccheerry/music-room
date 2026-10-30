@@ -109,3 +109,16 @@ describe('responses', () => {
 		expect(MeResponse.safeParse({ ...me, id: 'nope' }).success).toBe(false);
 	});
 });
+
+describe('messages shown in the app', () => {
+	const issues = (r: { error?: { issues: { message: string }[] } }) =>
+		r.error?.issues.map((i) => i.message);
+
+	it('explains what is wrong', () => {
+		expect(issues(LoginBody.safeParse({ email: 'nope', password: '' }))).toEqual([
+			'Enter a valid email',
+			'Enter your password',
+		]);
+		expect(issues(Password.safeParse('12345678'))).toEqual(['At least one letter']);
+	});
+});

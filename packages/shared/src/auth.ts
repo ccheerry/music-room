@@ -3,7 +3,7 @@ import { z } from 'zod';
 export const PASSWORD_MIN = 8;
 export const PASSWORD_MAX = 64;
 
-export const Email = z.string().trim().toLowerCase().max(254).pipe(z.email());
+export const Email = z.string().trim().toLowerCase().max(254).pipe(z.email('Enter a valid email'));
 
 export const Password = z
 	.string()
@@ -17,14 +17,14 @@ const Token = z.string().min(1).max(256);
 export const RegisterBody = z.strictObject({
 	email: Email,
 	password: Password,
-	displayName: z.string().trim().min(1).max(50),
+	displayName: z.string().trim().min(1, 'Enter a name').max(50, 'At most 50 characters'),
 });
 export type RegisterBody = z.infer<typeof RegisterBody>;
 
 // No policy here: accounts created under an older policy must still log in.
 export const LoginBody = z.strictObject({
 	email: Email,
-	password: z.string().min(1).max(PASSWORD_MAX),
+	password: z.string().min(1, 'Enter your password').max(PASSWORD_MAX),
 });
 export type LoginBody = z.infer<typeof LoginBody>;
 
@@ -43,7 +43,7 @@ export const RefreshBody = z.strictObject({ refreshToken: Token });
 export type RefreshBody = z.infer<typeof RefreshBody>;
 
 export const ChangePasswordBody = z.strictObject({
-	currentPassword: z.string().min(1).max(PASSWORD_MAX),
+	currentPassword: z.string().min(1, 'Enter your current password').max(PASSWORD_MAX),
 	newPassword: Password,
 });
 export type ChangePasswordBody = z.infer<typeof ChangePasswordBody>;
