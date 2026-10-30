@@ -1,26 +1,30 @@
 import { useQuery } from '@tanstack/react-query';
-import { StyleSheet } from 'react-native';
+import { router } from 'expo-router';
 
-import { checkHealth } from '@/api/client';
-import { HealthBadge } from '@/components/health-badge';
+import { getMe, logOut } from '@/api/auth';
+import { errorMessage } from '@/api/errors';
+import { Button } from '@/components/button';
+import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Spacing } from '@/constants/theme';
-import { useSettings } from '@/stores/settings';
 
 export default function HomeScreen() {
-	const apiUrl = useSettings((s) => s.apiUrl);
-	const health = useQuery({ queryKey: ['health', apiUrl], queryFn: () => checkHealth(apiUrl) });
+	const me = useQuery({ queryKey: ['me'], queryFn: getMe });
 
 	return (
-		<ThemedView style={styles.container}>
-			<ThemedText type="title">Music Room</ThemedText>
-			<ThemedText type="code">{apiUrl}</ThemedText>
-			<HealthBadge status={health.data ?? 'checking'} />
-		</ThemedView>
+		<Screen>
+			{me.data && (
+				<>
+					<ThemedText type="subtitle">Hi, {me.data.displayName}</ThemedText>
+					<ThemedText themeColor="textSecondary">{me.data.email}</ThemedText>
+				</>
+			)}
+			{me.isError && <ThemedText themeColor="danger">{errorMessage(me.error)}</ThemedText>}
+			<Button
+				label="Change password"
+				variant="secondary"
+				onPress={() => router.push('/change-password')}
+			/>
+			<Button label="Log out" variant="secondary" onPress={logOut} />
+		</Screen>
 	);
 }
-
-const styles = StyleSheet.create({
-	container: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: Spacing.three },
-});
