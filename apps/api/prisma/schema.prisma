@@ -13,6 +13,10 @@ model User {
   passwordHash    String?
   emailVerifiedAt DateTime?
   displayName     String
+  publicInfo      Json      @default("{}")
+  friendsInfo     Json      @default("{}")
+  privateInfo     Json      @default("{}")
+  musicPrefs      String[]  @default([])
   createdAt       DateTime  @default(now())
 
   refreshTokens RefreshToken[]
@@ -20,6 +24,10 @@ model User {
   devices       Device[]
   actionLogs    ActionLog[]
   socialLinks   SocialAccount[]
+  friendshipsA  Friendship[]   @relation("friendA")
+  friendshipsB  Friendship[]   @relation("friendB")
+
+  @@index([displayName])
 }
 
 enum Provider {
@@ -109,4 +117,24 @@ model ActionLog {
   dev  Device? @relation(fields: [deviceId], references: [id], onDelete: SetNull)
 
   @@index([userId, createdAt])
+}
+
+enum FriendshipStatus {
+  PENDING
+  ACCEPTED
+}
+
+// One row per pair, ids ordered (userAId < userBId): no duplicate in either direction.
+model Friendship {
+  userAId     String           @db.Uuid
+  userBId     String           @db.Uuid
+  requesterId String           @db.Uuid
+  status      FriendshipStatus @default(PENDING)
+  createdAt   DateTime         @default(now())
+
+  userA User @relation("friendA", fields: [userAId], references: [id], onDelete: Cascade)
+  userB User @relation("friendB", fields: [userBId], references: [id], onDelete: Cascade)
+
+  @@id([userAId, userBId])
+  @@index([userBId])
 }

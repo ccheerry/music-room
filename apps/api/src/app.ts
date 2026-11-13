@@ -20,6 +20,10 @@ import { meRoutes } from './modules/me/routes.js';
 import { socialRoutes } from './modules/social/routes.js';
 import { createSocialService } from './modules/social/service.js';
 import { createSocialVerifier, type SocialVerifier } from './lib/social.js';
+import { friendsRoutes } from './modules/friends/routes.js';
+import { createFriendsService } from './modules/friends/service.js';
+import { usersRoutes } from './modules/users/routes.js';
+import { createUsersService } from './modules/users/service.js';
 
 export type AppDeps = {
 	env: Env;
@@ -56,7 +60,11 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
 	});
 	await app.register(healthRoutes(prisma), { prefix: API_PREFIX });
 	await app.register(authRoutes(auth), { prefix: API_PREFIX });
-	await app.register(meRoutes(auth), { prefix: API_PREFIX });
+	const friends = createFriendsService({ prisma });
+	const users = createUsersService({ prisma, friends });
+	await app.register(meRoutes(auth, users), { prefix: API_PREFIX });
+	await app.register(usersRoutes(users), { prefix: API_PREFIX });
+	await app.register(friendsRoutes(friends), { prefix: API_PREFIX });
 	const verifier = deps.socialVerifier ?? createSocialVerifier(env);
 	const social = createSocialService({ prisma, verifier, auth });
 	await app.register(socialRoutes(social), { prefix: API_PREFIX });

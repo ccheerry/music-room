@@ -1,13 +1,14 @@
 import { z } from 'zod';
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
-import { ChangePasswordBody, ErrorBody, MeResponse } from '@music-room/shared';
+import { ChangePasswordBody, ErrorBody, MeResponse, UpdateMeBody } from '@music-room/shared';
 import type { AuthService } from '../auth/service.js';
+import type { UsersService } from '../users/service.js';
 
 const tags = ['me'];
 const security = [{ bearerAuth: [] }];
 
 export const meRoutes =
-	(auth: AuthService): FastifyPluginAsyncZod =>
+	(auth: AuthService, users: UsersService): FastifyPluginAsyncZod =>
 	async (app) => {
 		app.addHook('preHandler', app.authenticate);
 
@@ -15,13 +16,29 @@ export const meRoutes =
 			'/me',
 			{
 				schema: {
-					summary: 'Current user',
+					summary: 'Current user, every profile tier included',
 					tags,
 					security,
 					response: { 200: MeResponse, 401: ErrorBody },
 				},
 			},
-			async (req) => auth.me(req.user.sub),
+			async (req) => users.me(req.user.sub),
+		);
+
+		app.patch(
+			'/me',
+			{
+				schema: {
+					summary: 'Update the profile',
+					description:
+						'Each tier sent replaces the stored one. publicInfo: everyone, friendsInfo: accepted friends, privateInfo: only you.',
+					tags,
+					security,
+					body: UpdateMeBody,
+					response: { 200: MeResponse, 400: ErrorBody, 401: ErrorBody },
+				},
+			},
+			async (req) => users.updateMe(req.user.sub, req.body),
 		);
 
 		app.put(

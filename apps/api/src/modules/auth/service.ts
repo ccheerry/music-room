@@ -4,7 +4,6 @@ import type { FastifyBaseLogger } from 'fastify';
 import {
 	AuthErrorCode,
 	type LoginBody,
-	type MeResponse,
 	type RegisterBody,
 	type TokenPair,
 } from '@music-room/shared';
@@ -235,21 +234,6 @@ export function createAuthService({ prisma, mailer, log, signAccess, linkBase }:
 		});
 	}
 
-	async function me(userId: string): Promise<MeResponse> {
-		const user = await prisma.user.findUnique({
-			where: { id: userId },
-			include: { socialLinks: { select: { provider: true } } },
-		});
-		if (!user) throw httpError(401, AuthErrorCode.Unauthorized, 'Account not found');
-		return {
-			id: user.id,
-			email: user.email,
-			displayName: user.displayName,
-			hasPassword: user.passwordHash !== null,
-			providers: user.socialLinks.map((l) => l.provider),
-		};
-	}
-
 	return {
 		register,
 		resendVerification,
@@ -261,7 +245,6 @@ export function createAuthService({ prisma, mailer, log, signAccess, linkBase }:
 		forgotPassword,
 		resetPassword,
 		changePassword,
-		me,
 	};
 }
 
