@@ -7,6 +7,7 @@ import { loadEnv } from '../src/config/env.js';
 import { createPrisma, type PrismaClient } from '../src/db.js';
 import type { Mail } from '../src/mail/mailer.js';
 import { invalidSocialToken, type SocialVerifier } from '../src/lib/social.js';
+import { fakeDeezerFetch } from './fixtures/deezer.js';
 
 export type TestApp = { app: FastifyInstance; prisma: PrismaClient; mails: Mail[] };
 
@@ -17,7 +18,13 @@ export async function buildTestApp(): Promise<TestApp> {
 	const prisma = createPrisma(env.DATABASE_URL);
 	const mails: Mail[] = [];
 	const mailer = { send: async (mail: Mail) => void mails.push(mail) };
-	const app = await buildApp({ env, prisma, mailer, socialVerifier: fakeSocialVerifier });
+	const app = await buildApp({
+		env,
+		prisma,
+		mailer,
+		socialVerifier: fakeSocialVerifier,
+		deezerFetch: fakeDeezerFetch,
+	});
 	return { app, prisma, mails };
 }
 

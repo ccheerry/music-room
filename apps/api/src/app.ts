@@ -23,14 +23,18 @@ import { createSocialVerifier, type SocialVerifier } from './lib/social.js';
 import { friendsRoutes } from './modules/friends/routes.js';
 import { createFriendsService } from './modules/friends/service.js';
 import { usersRoutes } from './modules/users/routes.js';
+import { catalogRoutes } from './modules/catalog/routes.js';
+import { createDeezerClient } from './modules/catalog/deezer.js';
+import { createCatalogService } from './modules/catalog/service.js';
 import { createUsersService } from './modules/users/service.js';
 
 export type AppDeps = {
 	env: Env;
 	prisma: PrismaClient;
 	mailer: Mailer;
-	// Replaced in tests: providers are mocked at this boundary.
+	// Replaced in tests: providers and Deezer are mocked at these boundaries.
 	socialVerifier?: SocialVerifier;
+	deezerFetch?: typeof fetch;
 };
 
 export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
@@ -65,6 +69,9 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
 	await app.register(meRoutes(auth, users), { prefix: API_PREFIX });
 	await app.register(usersRoutes(users), { prefix: API_PREFIX });
 	await app.register(friendsRoutes(friends), { prefix: API_PREFIX });
+	const deezer = createDeezerClient({ fetch: deps.deezerFetch });
+	const catalog = createCatalogService({ prisma, deezer });
+	await app.register(catalogRoutes(catalog), { prefix: API_PREFIX });
 	const verifier = deps.socialVerifier ?? createSocialVerifier(env);
 	const social = createSocialService({ prisma, verifier, auth });
 	await app.register(socialRoutes(social), { prefix: API_PREFIX });
