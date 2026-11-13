@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { Button } from '@/components/button';
 import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
+import { SocialSignIn } from '@/features/social/social-sign-in';
 
 export default function WelcomeScreen() {
 	return (
@@ -17,6 +18,7 @@ export default function WelcomeScreen() {
 				variant="secondary"
 				onPress={() => router.push('/sign-up')}
 			/>
+			<SocialSignIn />
 		</Screen>
 	);
 }

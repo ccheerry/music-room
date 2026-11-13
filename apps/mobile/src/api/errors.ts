@@ -22,6 +22,11 @@ const MESSAGES: Record<string, string> = {
 	EMAIL_NOT_VERIFIED: 'Confirm your email first',
 	INVALID_TOKEN: 'This link is invalid or has expired',
 	RATE_LIMITED: 'Too many attempts, try again later',
+	PROVIDER_IN_USE: 'This account is already linked to another user',
+	LAST_LOGIN_METHOD: 'Set a password or link another account before unlinking this one',
+	EMAIL_REQUIRED: 'Your account at this provider has no email; sign up with email instead',
+	INVALID_SOCIAL_TOKEN: 'The sign-in was refused, try again',
+	SOCIAL_DISABLED: 'This sign-in method is not available on the server',
 };
 
 // Text shown to the user for any failed call.

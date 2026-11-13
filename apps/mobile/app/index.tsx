@@ -24,6 +24,11 @@ export default function HomeScreen() {
 				variant="secondary"
 				onPress={() => router.push('/change-password')}
 			/>
+			<Button
+				label="Linked accounts"
+				variant="secondary"
+				onPress={() => router.push('/linked-accounts')}
+			/>
 			<Button label="Log out" variant="secondary" onPress={logOut} />
 		</Screen>
 	);

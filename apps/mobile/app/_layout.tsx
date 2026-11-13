@@ -35,6 +35,10 @@ export default function RootLayout() {
 							name="change-password"
 							options={{ title: 'Change password' }}
 						/>
+						<Stack.Screen
+							name="linked-accounts"
+							options={{ title: 'Linked accounts' }}
+						/>
 					</Stack.Protected>
 					<Stack.Protected guard={!signedIn} redirectTo="/">
 						<Stack.Screen name="welcome" options={{ title: 'Welcome' }} />
@@ -45,6 +49,7 @@ export default function RootLayout() {
 							name="forgot-password"
 							options={{ title: 'Forgot password' }}
 						/>
+						<Stack.Screen name="account-exists" options={{ title: 'Account exists' }} />
 					</Stack.Protected>
 					<Stack.Screen
 						name="settings"
