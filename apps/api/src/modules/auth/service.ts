@@ -33,7 +33,7 @@ const invalidCredentials = () =>
 const invalidToken = (status: 400 | 401) =>
 	httpError(status, AuthErrorCode.InvalidToken, 'Invalid or expired token');
 
-const isUniqueViolation = (err: unknown) =>
+export const isUniqueViolation = (err: unknown) =>
 	err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002';
 
 export type AuthDeps = {
@@ -150,24 +150,25 @@ export function createAuthService({ prisma, mailer, log, signAccess, linkBase }:
 		if (!user.emailVerifiedAt) {
 			throw httpError(403, AuthErrorCode.EmailNotVerified, 'Confirm your email first');
 		}
+		return startSession(user.id, client);
+	}
+
+	// New session family on the calling device (registered from the client headers).
+	async function startSession(userId: string, client: ClientInfo): Promise<Session> {
 		const device = await prisma.device.upsert({
 			where: {
-				userId_platform_model: {
-					userId: user.id,
-					platform: client.platform,
-					model: client.device,
-				},
+				userId_platform_model: { userId, platform: client.platform, model: client.device },
 			},
 			update: { appVersion: client.appVersion, lastSeenAt: new Date() },
 			create: {
-				userId: user.id,
+				userId,
 				platform: client.platform,
 				model: client.device,
 				appVersion: client.appVersion,
 				name: client.device,
 			},
 		});
-		return issueSession(user.id, device.id, randomUUID());
+		return issueSession(userId, device.id, randomUUID());
 	}
 
 	// Rotation with reuse detection: presenting a replaced token revokes the whole family.
@@ -235,9 +236,18 @@ export function createAuthService({ prisma, mailer, log, signAccess, linkBase }:
 	}
 
 	async function me(userId: string): Promise<MeResponse> {
-		const user = await prisma.user.findUnique({ where: { id: userId } });
+		const user = await prisma.user.findUnique({
+			where: { id: userId },
+			include: { socialLinks: { select: { provider: true } } },
+		});
 		if (!user) throw httpError(401, AuthErrorCode.Unauthorized, 'Account not found');
-		return { id: user.id, email: user.email, displayName: user.displayName };
+		return {
+			id: user.id,
+			email: user.email,
+			displayName: user.displayName,
+			hasPassword: user.passwordHash !== null,
+			providers: user.socialLinks.map((l) => l.provider),
+		};
 	}
 
 	return {
@@ -245,6 +255,7 @@ export function createAuthService({ prisma, mailer, log, signAccess, linkBase }:
 		resendVerification,
 		verifyEmail,
 		login,
+		startSession,
 		refresh,
 		logout,
 		forgotPassword,

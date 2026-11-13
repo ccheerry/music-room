@@ -17,6 +17,20 @@ const EnvSchema = z.object({
 		.string()
 		.regex(/^[a-z][a-z0-9+.-]*:\/\/(.*\/)?$/i, 'scheme:// URL ending with /')
 		.default('musicroom://'),
+	// Social login is off until these are set. Google: every OAuth client id, comma-separated.
+	GOOGLE_CLIENT_IDS: z
+		.string()
+		.optional()
+		.transform((v) =>
+			v
+				? v
+						.split(',')
+						.map((id) => id.trim())
+						.filter(Boolean)
+				: [],
+		),
+	FACEBOOK_APP_ID: z.string().optional(),
+	FACEBOOK_APP_SECRET: z.string().optional(),
 });
 export type Env = z.infer<typeof EnvSchema>;
 

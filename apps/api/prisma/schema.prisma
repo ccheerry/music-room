@@ -19,6 +19,25 @@ model User {
   emailTokens   EmailToken[]
   devices       Device[]
   actionLogs    ActionLog[]
+  socialLinks   SocialAccount[]
+}
+
+enum Provider {
+  google
+  facebook
+}
+
+model SocialAccount {
+  provider   Provider
+  providerId String
+  userId     String   @db.Uuid
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerId])
+  // One account per provider per user.
+  @@unique([userId, provider])
 }
 
 model RefreshToken {

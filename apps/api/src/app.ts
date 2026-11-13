@@ -17,10 +17,20 @@ import { healthRoutes } from './modules/health/routes.js';
 import { authRoutes } from './modules/auth/routes.js';
 import { createAuthService } from './modules/auth/service.js';
 import { meRoutes } from './modules/me/routes.js';
+import { socialRoutes } from './modules/social/routes.js';
+import { createSocialService } from './modules/social/service.js';
+import { createSocialVerifier, type SocialVerifier } from './lib/social.js';
 
-export type AppDeps = { env: Env; prisma: PrismaClient; mailer: Mailer };
+export type AppDeps = {
+	env: Env;
+	prisma: PrismaClient;
+	mailer: Mailer;
+	// Replaced in tests: providers are mocked at this boundary.
+	socialVerifier?: SocialVerifier;
+};
 
-export async function buildApp({ env, prisma, mailer }: AppDeps): Promise<FastifyInstance> {
+export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
+	const { env, prisma, mailer } = deps;
 	const app = Fastify({ logger: { level: env.LOG_LEVEL } }).withTypeProvider<ZodTypeProvider>();
 	app.setValidatorCompiler(validatorCompiler);
 	app.setSerializerCompiler(serializerCompiler);
@@ -47,5 +57,8 @@ export async function buildApp({ env, prisma, mailer }: AppDeps): Promise<Fastif
 	await app.register(healthRoutes(prisma), { prefix: API_PREFIX });
 	await app.register(authRoutes(auth), { prefix: API_PREFIX });
 	await app.register(meRoutes(auth), { prefix: API_PREFIX });
+	const verifier = deps.socialVerifier ?? createSocialVerifier(env);
+	const social = createSocialService({ prisma, verifier, auth });
+	await app.register(socialRoutes(social), { prefix: API_PREFIX });
 	return app;
 }
