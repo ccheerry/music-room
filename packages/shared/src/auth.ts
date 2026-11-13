@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { Provider } from './social.js';
 
 export const PASSWORD_MIN = 8;
 export const PASSWORD_MAX = 64;
@@ -59,6 +60,8 @@ export const MeResponse = z.object({
 	id: z.uuid(),
 	email: z.email(),
 	displayName: z.string(),
+	hasPassword: z.boolean(),
+	providers: z.array(Provider),
 });
 export type MeResponse = z.infer<typeof MeResponse>;
 

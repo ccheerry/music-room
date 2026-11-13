@@ -2,5 +2,6 @@ export * from './auth.js';
 export * from './client.js';
 export * from './errors.js';
 export * from './health.js';
+export * from './social.js';
 
 export const API_PREFIX = '/api/v1';
