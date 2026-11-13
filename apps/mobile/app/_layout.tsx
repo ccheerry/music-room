@@ -5,6 +5,7 @@ import { useColorScheme } from 'react-native';
 
 import { queryClient } from '@/api/query-client';
 import { ThemedText } from '@/components/themed-text';
+import { startSocket } from '@/realtime/socket';
 import { useSession } from '@/stores/session';
 
 const settingsLink = () => (
@@ -19,6 +20,7 @@ export default function RootLayout() {
 
 	useEffect(() => {
 		useSession.getState().restore();
+		startSocket();
 	}, []);
 
 	if (status === 'loading') return null;

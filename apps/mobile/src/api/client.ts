@@ -86,7 +86,11 @@ async function refreshTokens(): Promise<string> {
 
 // Single flight: concurrent 401s share one refresh, a second one would reuse a spent token.
 let inflight: Promise<string> | null = null;
-const refreshOnce = () => (inflight ??= refreshTokens().finally(() => (inflight = null)));
+export const refreshOnce = () => (inflight ??= refreshTokens().finally(() => (inflight = null)));
+
+// Current access token, refreshed first when there is none in memory (after a restart).
+export const ensureAccessToken = async (): Promise<string> =>
+	useSession.getState().accessToken ?? refreshOnce();
 
 export async function request<T = void>(
 	path: string,

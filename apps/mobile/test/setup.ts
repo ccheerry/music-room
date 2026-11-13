@@ -22,3 +22,22 @@ jest.mock('expo-audio', () => ({
 		volume: 1,
 	}),
 }));
+
+// No real socket under Jest: a fake that records what it is asked to do.
+jest.mock('socket.io-client', () => ({
+	io: jest.fn((uri: string) => {
+		const handlers = new Map<string, (...args: unknown[]) => void>();
+		return {
+			io: { uri, on: jest.fn() },
+			on: jest.fn((event: string, fn: (...args: unknown[]) => void) =>
+				handlers.set(event, fn),
+			),
+			off: jest.fn(),
+			emit: jest.fn(),
+			connect: jest.fn(),
+			disconnect: jest.fn(),
+			removeAllListeners: jest.fn(),
+			trigger: (event: string, ...args: unknown[]) => handlers.get(event)?.(...args),
+		};
+	}),
+}));
