@@ -10,3 +10,15 @@ jest.mock('expo-secure-store', () => {
 		deleteItemAsync: jest.fn(async (key: string) => void store.delete(key)),
 	};
 });
+
+// Native audio is not available under Jest; tests that care install their own fake.
+jest.mock('expo-audio', () => ({
+	createAudioPlayer: () => ({
+		addListener: jest.fn(),
+		replace: jest.fn(),
+		play: jest.fn(),
+		pause: jest.fn(),
+		seekTo: jest.fn(async () => undefined),
+		volume: 1,
+	}),
+}));

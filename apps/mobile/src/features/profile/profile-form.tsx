@@ -1,9 +1,11 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { type MeResponse, UpdateMeBody } from '@music-room/shared';
+import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { StyleSheet, View } from 'react-native';
 
+import { getGenres } from '@/api/catalog';
 import { errorMessage } from '@/api/errors';
 import { updateMe } from '@/api/users';
 import { Button } from '@/components/button';
@@ -31,8 +33,11 @@ export function ProfileForm({ me }: { me: MeResponse }) {
 	});
 	const prefs = useWatch({ control, name: 'musicPrefs' }) ?? [];
 
-	const addPref = () => {
-		const value = prefInput.trim();
+	const genres = useQuery({ queryKey: ['genres'], queryFn: getGenres, staleTime: Infinity });
+	const suggestions = (genres.data ?? []).map((g) => g.name).filter((n) => !prefs.includes(n));
+
+	const addPref = (raw: string) => {
+		const value = raw.trim();
 		if (value && !prefs.includes(value) && prefs.length < MAX_PREFS) {
 			setValue('musicPrefs', [...prefs, value]);
 		}
@@ -96,9 +101,17 @@ export function ProfileForm({ me }: { me: MeResponse }) {
 					placeholder="Add a genre or artist"
 					value={prefInput}
 					onChangeText={setPrefInput}
-					onSubmitEditing={addPref}
+					onSubmitEditing={() => addPref(prefInput)}
 					returnKeyType="done"
 				/>
+				{suggestions.length > 0 && (
+					<>
+						<ThemedText type="small" themeColor="textSecondary">
+							Genres
+						</ThemedText>
+						<Chips values={suggestions} hint="Adds this genre" onPress={addPref} />
+					</>
+				)}
 			</View>
 			{status && (
 				<ThemedText themeColor={status.ok ? 'success' : 'danger'}>{status.text}</ThemedText>

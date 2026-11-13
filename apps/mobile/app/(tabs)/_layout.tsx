@@ -1,6 +1,8 @@
 import { Link, Tabs } from 'expo-router';
+import { BottomTabBar } from 'expo-router/tabs';
 
 import { ThemedText } from '@/components/themed-text';
+import { MiniPlayer } from '@/features/player/mini-player';
 
 const settingsLink = () => (
 	<Link href="/settings" style={{ marginRight: 16 }}>
@@ -12,6 +14,12 @@ const settingsLink = () => (
 export default function TabsLayout() {
 	return (
 		<Tabs
+			tabBar={(props) => (
+				<>
+					<MiniPlayer />
+					<BottomTabBar {...props} />
+				</>
+			)}
 			screenOptions={{
 				headerRight: settingsLink,
 				tabBarIconStyle: { display: 'none' },
@@ -20,6 +28,7 @@ export default function TabsLayout() {
 			}}
 		>
 			<Tabs.Screen name="index" options={{ title: 'Home' }} />
+			<Tabs.Screen name="search" options={{ title: 'Search' }} />
 			<Tabs.Screen name="friends" options={{ title: 'Friends' }} />
 			<Tabs.Screen name="profile" options={{ title: 'Profile' }} />
 		</Tabs>

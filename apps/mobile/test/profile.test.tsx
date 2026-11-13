@@ -1,5 +1,9 @@
 import type { MeResponse, UserProfile } from '@music-room/shared';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen } from '@testing-library/react-native';
+import type { ReactElement } from 'react';
+
+import { queryClient } from '@/api/query-client';
 
 import { ProfileForm } from '@/features/profile/profile-form';
 import { UserView } from '@/features/profile/user-view';
@@ -13,13 +17,25 @@ const PROFILE: MeResponse = {
 	musicPrefs: ['Jazz'],
 };
 
+const withQuery = (ui: ReactElement) =>
+	render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>);
+
 beforeEach(async () => {
+	queryClient.clear();
 	await useSession.getState().signIn({ accessToken: 'a', refreshToken: 'r', expiresIn: 900 });
 });
 
 describe('ProfileForm', () => {
+	it('adds a genre suggested by the catalog', async () => {
+		globalThis.fetch = jest.fn(async () => reply(200, [{ id: 132, name: 'Pop' }])) as never;
+		await withQuery(<ProfileForm me={PROFILE} />);
+		await fireEvent.press(await screen.findByText('Pop'));
+		expect(screen.getAllByHintText('Removes this preference')).toHaveLength(2);
+		expect(screen.queryAllByHintText('Adds this genre')).toHaveLength(0);
+	});
+
 	it('labels every tier with who can see it', async () => {
-		await render(<ProfileForm me={PROFILE} />);
+		await withQuery(<ProfileForm me={PROFILE} />);
 		expect(screen.getByText('Everyone can see this')).toBeOnTheScreen();
 		expect(screen.getByText('Only your friends can see this')).toBeOnTheScreen();
 		expect(screen.getByText('Only you can see this')).toBeOnTheScreen();
@@ -28,9 +44,11 @@ describe('ProfileForm', () => {
 	});
 
 	it('sends each tier and the preferences on save', async () => {
-		const fetchMock = jest.fn().mockResolvedValue(reply(200, PROFILE));
-		globalThis.fetch = fetchMock;
-		await render(<ProfileForm me={PROFILE} />);
+		const fetchMock = jest.fn(async (url: string, init?: RequestInit) =>
+			reply(200, url.endsWith('/genres') || !init ? [] : PROFILE),
+		);
+		globalThis.fetch = fetchMock as never;
+		await withQuery(<ProfileForm me={PROFILE} />);
 
 		await fireEvent.changeText(screen.getByLabelText('Friends Bio'), 'hello friends');
 		await fireEvent.changeText(screen.getByLabelText('Add a preference'), 'Rock');
@@ -39,9 +57,9 @@ describe('ProfileForm', () => {
 		await fireEvent.press(screen.getByText('Save profile'));
 
 		expect(await screen.findByText('Profile saved')).toBeOnTheScreen();
-		const [, init] = fetchMock.mock.calls[0];
-		expect(init.method).toBe('PATCH');
-		expect(JSON.parse(init.body)).toMatchObject({
+		const [, init] = fetchMock.mock.calls.find(([url]) => url.endsWith('/me'))!;
+		expect(init?.method).toBe('PATCH');
+		expect(JSON.parse(String(init?.body))).toMatchObject({
 			friendsInfo: { bio: 'hello friends' },
 			privateInfo: { phone: '123' },
 			musicPrefs: ['Rock'],
@@ -49,13 +67,13 @@ describe('ProfileForm', () => {
 	});
 
 	it('shows schema errors without calling the API', async () => {
-		const fetchMock = jest.fn();
-		globalThis.fetch = fetchMock;
-		await render(<ProfileForm me={PROFILE} />);
+		const fetchMock = jest.fn(async (url: string) => reply(200, url ? [] : null));
+		globalThis.fetch = fetchMock as never;
+		await withQuery(<ProfileForm me={PROFILE} />);
 		await fireEvent.changeText(screen.getByLabelText('Public Birthday (YYYY-MM-DD)'), 'soon');
 		await fireEvent.press(screen.getByText('Save profile'));
 		expect(await screen.findByText('Use YYYY-MM-DD')).toBeOnTheScreen();
-		expect(fetchMock).not.toHaveBeenCalled();
+		expect(fetchMock.mock.calls.every(([url]) => String(url).endsWith('/genres'))).toBe(true);
 	});
 });
 
