@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { Provider } from './social.js';
+import { SelfUser } from './users.js';
 
 export const PASSWORD_MIN = 8;
 export const PASSWORD_MAX = 64;
@@ -56,10 +57,8 @@ export const TokenPair = z.object({
 });
 export type TokenPair = z.infer<typeof TokenPair>;
 
-export const MeResponse = z.object({
-	id: z.uuid(),
-	email: z.email(),
-	displayName: z.string(),
+// The owner's full profile plus how they can log in.
+export const MeResponse = SelfUser.extend({
 	hasPassword: z.boolean(),
 	providers: z.array(Provider),
 });
