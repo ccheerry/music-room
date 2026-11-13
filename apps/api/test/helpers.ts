@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import argon2 from 'argon2';
+import { io as ioClient, type Socket as ClientSocket } from 'socket.io-client';
 import type { FastifyInstance } from 'fastify';
 import type { TokenPair } from '@music-room/shared';
 import { buildApp } from '../src/app.js';
@@ -106,3 +107,57 @@ export function call(
 		...(payload !== undefined && { payload }),
 	});
 }
+
+// Socket.IO needs a real port: listen once per test file.
+export async function listen(t: TestApp): Promise<string> {
+	const address = await t.app.listen({ host: '127.0.0.1', port: 0 });
+	return address;
+}
+
+export function connectSocket(
+	url: string,
+	user: TestUser | null,
+	extra: object = {},
+): Promise<ClientSocket> {
+	const socket = ioClient(url, {
+		auth: {
+			token: user?.tokens.accessToken ?? 'nope',
+			platform: 'ios',
+			device: 'iPhone 15',
+			appVersion: '1.0.0',
+			...extra,
+		},
+		transports: ['websocket'],
+		reconnection: false,
+		forceNew: true,
+	});
+	return new Promise((resolve, reject) => {
+		socket.once('connect', () => resolve(socket));
+		socket.once('connect_error', (err) => {
+			socket.close();
+			reject(err);
+		});
+	});
+}
+
+export const emitAck = <T = { ok: boolean; error?: { code: string } }>(
+	socket: ClientSocket,
+	event: string,
+	payload: unknown,
+): Promise<T> => socket.timeout(2000).emitWithAck(event, payload);
+
+// Resolves with the next `event` payload received, or rejects after `ms`.
+export const nextEvent = <T = unknown>(
+	socket: ClientSocket,
+	event: string,
+	ms = 2000,
+): Promise<T> =>
+	new Promise((resolve, reject) => {
+		const timer = setTimeout(() => reject(new Error(`no ${event} within ${ms}ms`)), ms);
+		socket.once(event, (payload: T) => {
+			clearTimeout(timer);
+			resolve(payload);
+		});
+	});
+
+export type { ClientSocket };

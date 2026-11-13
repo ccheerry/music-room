@@ -26,6 +26,13 @@ import { usersRoutes } from './modules/users/routes.js';
 import { catalogRoutes } from './modules/catalog/routes.js';
 import { createDeezerClient } from './modules/catalog/deezer.js';
 import { createCatalogService } from './modules/catalog/service.js';
+import { createRealtime, type Realtime } from './modules/realtime/server.js';
+
+declare module 'fastify' {
+	interface FastifyInstance {
+		realtime: Realtime;
+	}
+}
 import { createUsersService } from './modules/users/service.js';
 
 export type AppDeps = {
@@ -54,6 +61,20 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
 		errorResponseBuilder: (_req, ctx) =>
 			httpError(429, 'RATE_LIMITED', `Too many requests, retry in ${ctx.after}`),
 	});
+
+	const { io, realtime } = createRealtime({
+		server: app.server,
+		verify: (token) => app.jwt.verify(token),
+		prisma,
+		log: app.log,
+	});
+	app.addHook('preClose', async () => {
+		io.local.disconnectSockets(true);
+	});
+	app.addHook('onClose', async () => {
+		io.engine.close();
+	});
+	app.decorate('realtime', realtime);
 
 	const auth = createAuthService({
 		prisma,

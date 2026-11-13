@@ -19,6 +19,7 @@
 		"@types/node": "^26.6.5",
 		"@types/nodemailer": "^8.0.2",
 		"prisma": "^7.10.1",
+		"socket.io-client": "^4.8.4",
 		"tsx": "^4.23.15",
 		"typescript": "^6.0.3",
 		"vitest": "^5.0.5"
@@ -36,6 +37,7 @@
 		"fastify-type-provider-zod": "^7.0.0",
 		"google-auth-library": "^11.3.4",
 		"nodemailer": "^10.3.1",
+		"socket.io": "^4.8.4",
 		"zod": "^4.6.7"
 	}
 }
