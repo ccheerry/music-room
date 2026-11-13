@@ -4,16 +4,9 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 import LinkedAccountsScreen from '../app/linked-accounts';
 import { queryClient } from '@/api/query-client';
 import { useSession } from '@/stores/session';
+import { ME, reply } from './fixtures';
 
-const ME = {
-	id: '0b7c6f1e-2f4a-4c1a-9d5e-3a1b2c3d4e5f',
-	email: 'a@b.co',
-	displayName: 'Ana',
-	hasPassword: false,
-	providers: ['google'],
-};
-
-const reply = (status: number, body: unknown) => ({ status, json: async () => body });
+const LINKED = { ...ME, hasPassword: false, providers: ['google'] };
 
 beforeEach(async () => {
 	queryClient.clear();
@@ -29,7 +22,7 @@ const renderScreen = () =>
 
 describe('LinkedAccountsScreen', () => {
 	it('shows which providers are linked', async () => {
-		globalThis.fetch = jest.fn().mockResolvedValue(reply(200, ME));
+		globalThis.fetch = jest.fn().mockResolvedValue(reply(200, LINKED));
 		await renderScreen();
 		expect(await screen.findByText('Google: linked')).toBeOnTheScreen();
 		expect(screen.getByText('Facebook: not linked')).toBeOnTheScreen();
@@ -39,7 +32,7 @@ describe('LinkedAccountsScreen', () => {
 	it('explains why the last login method cannot be unlinked', async () => {
 		globalThis.fetch = jest
 			.fn()
-			.mockResolvedValueOnce(reply(200, ME))
+			.mockResolvedValueOnce(reply(200, LINKED))
 			.mockResolvedValueOnce(
 				reply(409, { error: { code: 'LAST_LOGIN_METHOD', message: 'x' } }),
 			);

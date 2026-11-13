@@ -1,21 +1,13 @@
 import { renderRouter, screen } from 'expo-router/testing-library';
 
 import { useSession } from '@/stores/session';
+import { ME, reply } from './fixtures';
 
 // Relative to the Jest root (apps/mobile).
 const APP = './app';
 
 beforeEach(() => {
-	globalThis.fetch = jest.fn().mockResolvedValue({
-		status: 200,
-		json: async () => ({
-			id: '0b7c6f1e-2f4a-4c1a-9d5e-3a1b2c3d4e5f',
-			email: 'a@b.co',
-			displayName: 'Ana',
-			hasPassword: true,
-			providers: [],
-		}),
-	});
+	globalThis.fetch = jest.fn().mockResolvedValue(reply(200, ME));
 });
 
 describe('auth gate', () => {

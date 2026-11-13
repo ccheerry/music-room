@@ -30,7 +30,8 @@ export default function RootLayout() {
 				<Stack screenOptions={{ headerRight: settingsLink }}>
 					{/* Explicit targets: the default picks the first free route by file name. */}
 					<Stack.Protected guard={signedIn} redirectTo="/welcome">
-						<Stack.Screen name="index" options={{ title: 'Music Room' }} />
+						<Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+						<Stack.Screen name="user/[id]" options={{ title: 'Profile' }} />
 						<Stack.Screen
 							name="change-password"
 							options={{ title: 'Change password' }}

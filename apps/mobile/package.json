@@ -62,6 +62,9 @@
 		},
 		"setupFiles": [
 			"./test/setup.ts"
+		],
+		"setupFilesAfterEnv": [
+			"./test/teardown.ts"
 		]
 	}
 }
