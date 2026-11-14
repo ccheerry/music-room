@@ -235,16 +235,20 @@ describe('passwords', () => {
 });
 
 describe('rate limit', () => {
-	it('limits verification mails per address', async () => {
+	it('limits mails per mailbox, all mail routes together', async () => {
+		// The sign-up mail is the first of the five.
 		const email = await register();
 		const codes: number[] = [];
-		for (let i = 0; i < 6; i++) {
+		for (let i = 0; i < 4; i++) {
 			codes.push((await post('/auth/resend-verification', { email })).statusCode);
 		}
-		expect(codes.slice(0, 5)).toEqual([204, 204, 204, 204, 204]);
-		const blocked = await post('/auth/resend-verification', { email });
-		expect(blocked.statusCode).toBe(429);
-		expect(blocked.json().error.code).toBe('RATE_LIMITED');
+		expect(codes).toEqual([204, 204, 204, 204]);
+		for (const route of ['/auth/resend-verification', '/auth/forgot-password']) {
+			const blocked = await post(route, { email });
+			expect(blocked.statusCode).toBe(429);
+			expect(blocked.json().error.code).toBe('RATE_LIMITED');
+			expect(Number(blocked.headers['retry-after'])).toBeGreaterThan(0);
+		}
 	});
 });
 

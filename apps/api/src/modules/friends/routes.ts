@@ -18,13 +18,14 @@ const errors = { 400: ErrorBody, 401: ErrorBody, 404: ErrorBody };
 export const friendsRoutes =
 	(friends: FriendsService): FastifyPluginAsyncZod =>
 	async (app) => {
-		app.addHook('preHandler', app.authenticate);
+		app.addHook('onRequest', app.authenticate);
 
 		app.get(
 			'/friends',
 			{
 				schema: {
 					summary: 'Accepted friends',
+					description: 'Sorted by name, at most 500.',
 					tags,
 					security,
 					response: { 200: FriendList, 401: ErrorBody },
@@ -38,6 +39,7 @@ export const friendsRoutes =
 			{
 				schema: {
 					summary: 'Pending requests, incoming and outgoing',
+					description: 'Most recent first.',
 					tags,
 					security,
 					response: { 200: FriendRequests, 401: ErrorBody },
@@ -66,6 +68,7 @@ export const friendsRoutes =
 			{
 				schema: {
 					summary: 'Accept the request sent by user :id',
+					description: '404 when that user has no pending request to the caller.',
 					tags,
 					security,
 					params: UserIdParams,
@@ -83,6 +86,7 @@ export const friendsRoutes =
 			{
 				schema: {
 					summary: 'Decline the request from, or cancel the request to, user :id',
+					description: '404 when there is no pending request between the two users.',
 					tags,
 					security,
 					params: UserIdParams,
@@ -100,6 +104,7 @@ export const friendsRoutes =
 			{
 				schema: {
 					summary: 'Remove a friend',
+					description: 'Also revokes the device control each one gave the other.',
 					tags,
 					security,
 					params: UserIdParams,

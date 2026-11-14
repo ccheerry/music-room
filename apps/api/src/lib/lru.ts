@@ -16,5 +16,8 @@ export function createLru<V>(maxEntries: number, ttlMs: number, now = () => Date
 			entries.set(key, { value, expiresAt: now() + ttlMs });
 			if (entries.size > maxEntries) entries.delete(entries.keys().next().value!);
 		},
+		delete(key: string): void {
+			entries.delete(key);
+		},
 	};
 }

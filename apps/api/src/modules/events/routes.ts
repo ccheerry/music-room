@@ -34,13 +34,15 @@ const voting = {
 export const eventsRoutes =
 	(events: EventsService, queue: EventQueue): FastifyPluginAsyncZod =>
 	async (app) => {
-		app.addHook('preHandler', app.authenticate);
+		app.addHook('onRequest', app.authenticate);
 
 		app.get(
 			'/events',
 			{
 				schema: {
 					summary: 'Events I can see: public, invited or mine',
+					description:
+						'Private events of other people are never listed. Paginated with limit and offset.',
 					tags,
 					security,
 					querystring: EventListQuery,
@@ -55,6 +57,8 @@ export const eventsRoutes =
 			{
 				schema: {
 					summary: 'Create an event',
+					description:
+						'The caller becomes the owner. A LOCATION vote license needs a zone.',
 					tags,
 					security,
 					body: CreateEventBody,
@@ -84,6 +88,8 @@ export const eventsRoutes =
 			{
 				schema: {
 					summary: 'Update an event (owner)',
+					description:
+						'Making a public event private removes from its live room whoever can no longer see it.',
 					tags,
 					security,
 					params: EventIdParams,
@@ -99,6 +105,7 @@ export const eventsRoutes =
 			{
 				schema: {
 					summary: 'Delete an event (owner)',
+					description: 'Everybody in its live room is told with event:deleted.',
 					tags,
 					security,
 					params: EventIdParams,
@@ -116,6 +123,7 @@ export const eventsRoutes =
 			{
 				schema: {
 					summary: 'Invited users (owner)',
+					description: 'In invitation order, at most 500.',
 					tags,
 					security,
 					params: EventIdParams,
@@ -130,6 +138,7 @@ export const eventsRoutes =
 			{
 				schema: {
 					summary: 'Invite a user (owner)',
+					description: 'Idempotent. 404 when the user does not exist.',
 					tags,
 					security,
 					params: EventIdParams,
@@ -148,6 +157,7 @@ export const eventsRoutes =
 			{
 				schema: {
 					summary: 'Withdraw an invitation (owner)',
+					description: 'On a private event the user also leaves its live room at once.',
 					tags,
 					security,
 					params: InviteeParams,
@@ -165,6 +175,8 @@ export const eventsRoutes =
 			{
 				schema: {
 					summary: 'Now playing, ranked queue and my votes',
+					description:
+						'Same state as the event:state broadcast, plus the entries the caller voted for.',
 					tags,
 					security,
 					params: EventIdParams,
@@ -223,6 +235,7 @@ export const eventsRoutes =
 			{
 				schema: {
 					summary: 'Remove my vote',
+					description: 'Idempotent. 409 STALE when the track already played.',
 					tags,
 					security,
 					params: EntryParams,

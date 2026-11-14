@@ -10,13 +10,15 @@ const security = [{ bearerAuth: [] }];
 export const meRoutes =
 	(auth: AuthService, users: UsersService): FastifyPluginAsyncZod =>
 	async (app) => {
-		app.addHook('preHandler', app.authenticate);
+		app.addHook('onRequest', app.authenticate);
 
 		app.get(
 			'/me',
 			{
 				schema: {
 					summary: 'Current user, every profile tier included',
+					description:
+						'Public, friends-only and private information, email, linked providers.',
 					tags,
 					security,
 					response: { 200: MeResponse, 401: ErrorBody },
@@ -46,6 +48,8 @@ export const meRoutes =
 			{
 				schema: {
 					summary: 'Change the password',
+					description:
+						'Needs the current password; 403 INVALID_CREDENTIALS when it is wrong.',
 					tags,
 					security,
 					body: ChangePasswordBody,

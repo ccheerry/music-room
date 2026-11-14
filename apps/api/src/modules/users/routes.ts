@@ -14,7 +14,7 @@ const security = [{ bearerAuth: [] }];
 export const usersRoutes =
 	(users: UsersService): FastifyPluginAsyncZod =>
 	async (app) => {
-		app.addHook('preHandler', app.authenticate);
+		app.addHook('onRequest', app.authenticate);
 
 		app.get(
 			'/users',

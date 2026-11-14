@@ -16,7 +16,7 @@ const upstream = { 502: ErrorBody, 503: ErrorBody };
 export const catalogRoutes =
 	(catalog: CatalogService): FastifyPluginAsyncZod =>
 	async (app) => {
-		app.addHook('preHandler', app.authenticate);
+		app.addHook('onRequest', app.authenticate);
 
 		app.get(
 			'/tracks/search',
@@ -39,6 +39,8 @@ export const catalogRoutes =
 			{
 				schema: {
 					summary: 'One track, with a fresh preview URL',
+					description:
+						'Preview links expire after a few minutes: ask again right before playing. 404 TRACK_NOT_FOUND for an id Deezer does not know.',
 					tags,
 					security,
 					params: TrackParams,
@@ -59,6 +61,7 @@ export const catalogRoutes =
 			{
 				schema: {
 					summary: 'Music genres, for profile preferences',
+					description: 'From Deezer, cached for a day.',
 					tags,
 					security,
 					response: { 200: GenreList, 401: ErrorBody, ...upstream },

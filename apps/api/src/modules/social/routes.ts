@@ -63,9 +63,11 @@ export const socialRoutes =
 		app.post(
 			'/me/link/google',
 			{
-				preHandler: app.authenticate,
+				onRequest: app.authenticate,
 				schema: {
 					summary: 'Link a Google account to the current user',
+					description:
+						'409 PROVIDER_IN_USE when that Google account belongs to another user.',
 					tags: ['me'],
 					security,
 					body: GoogleAuthBody,
@@ -81,9 +83,11 @@ export const socialRoutes =
 		app.post(
 			'/me/link/facebook',
 			{
-				preHandler: app.authenticate,
+				onRequest: app.authenticate,
 				schema: {
 					summary: 'Link a Facebook account to the current user',
+					description:
+						'409 PROVIDER_IN_USE when that Facebook account belongs to another user.',
 					tags: ['me'],
 					security,
 					body: FacebookAuthBody,
@@ -99,7 +103,7 @@ export const socialRoutes =
 		app.delete(
 			'/me/link/:provider',
 			{
-				preHandler: app.authenticate,
+				onRequest: app.authenticate,
 				schema: {
 					summary: 'Unlink a provider',
 					description: '409 LAST_LOGIN_METHOD when it is the only way to log in.',

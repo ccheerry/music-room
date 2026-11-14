@@ -19,13 +19,14 @@ const errors = { 400: ErrorBody, 401: ErrorBody, 404: ErrorBody };
 export const devicesRoutes =
 	(devices: DevicesService): FastifyPluginAsyncZod =>
 	async (app) => {
-		app.addHook('preHandler', app.authenticate);
+		app.addHook('onRequest', app.authenticate);
 
 		app.get(
 			'/devices',
 			{
 				schema: {
 					summary: 'My devices, with who may control each one',
+					description: 'A device is registered at login from the client headers.',
 					tags,
 					security,
 					response: { 200: MyDeviceList, 401: ErrorBody },
@@ -39,6 +40,7 @@ export const devicesRoutes =
 			{
 				schema: {
 					summary: 'Devices I can control: mine and those friends granted me',
+					description: 'Expired grants are left out.',
 					tags,
 					security,
 					response: { 200: ControllableList, 401: ErrorBody },
@@ -52,6 +54,7 @@ export const devicesRoutes =
 			{
 				schema: {
 					summary: 'Rename one of my devices',
+					description: '404 for a device of somebody else.',
 					tags,
 					security,
 					params: DeviceIdParams,

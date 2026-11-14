@@ -10,6 +10,7 @@ export const healthRoutes =
 			{
 				schema: {
 					summary: 'Liveness and database check',
+					description: 'Public. 503 when the database does not answer.',
 					tags: ['health'],
 					response: { 200: HealthResponse, 503: HealthResponse, 500: ErrorBody },
 				},

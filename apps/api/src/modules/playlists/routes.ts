@@ -33,13 +33,15 @@ const editing = {
 export const playlistsRoutes =
 	(playlists: PlaylistsService, editor: PlaylistEditor): FastifyPluginAsyncZod =>
 	async (app) => {
-		app.addHook('preHandler', app.authenticate);
+		app.addHook('onRequest', app.authenticate);
 
 		app.get(
 			'/playlists',
 			{
 				schema: {
 					summary: 'Playlists I can see: public, shared with me or mine',
+					description:
+						'Private playlists of other people are never listed. Paginated with limit and offset.',
 					tags,
 					security,
 					querystring: PlaylistListQuery,
@@ -54,6 +56,7 @@ export const playlistsRoutes =
 			{
 				schema: {
 					summary: 'Create a playlist',
+					description: 'The caller becomes the owner.',
 					tags,
 					security,
 					body: CreatePlaylistBody,
@@ -84,6 +87,8 @@ export const playlistsRoutes =
 			{
 				schema: {
 					summary: 'Rename or change the licenses (owner)',
+					description:
+						'Making a public playlist private removes from its live room whoever can no longer see it.',
 					tags,
 					security,
 					params: PlaylistIdParams,
@@ -99,6 +104,7 @@ export const playlistsRoutes =
 			{
 				schema: {
 					summary: 'Delete a playlist (owner)',
+					description: 'Everybody in its live room is told with playlist:deleted.',
 					tags,
 					security,
 					params: PlaylistIdParams,
@@ -116,6 +122,7 @@ export const playlistsRoutes =
 			{
 				schema: {
 					summary: 'Invited members',
+					description: 'Visible to whoever can see the playlist, at most 500.',
 					tags,
 					security,
 					params: PlaylistIdParams,
@@ -130,6 +137,7 @@ export const playlistsRoutes =
 			{
 				schema: {
 					summary: 'Invite a member (owner)',
+					description: 'Idempotent. 404 when the user does not exist.',
 					tags,
 					security,
 					params: PlaylistIdParams,
@@ -148,6 +156,8 @@ export const playlistsRoutes =
 			{
 				schema: {
 					summary: 'Remove a member (owner)',
+					description:
+						'On a private playlist the user also leaves its live room at once.',
 					tags,
 					security,
 					params: MemberParams,
@@ -165,6 +175,7 @@ export const playlistsRoutes =
 			{
 				schema: {
 					summary: 'Entries in order, with the playlist version',
+					description: 'Same state as the playlist:state broadcast.',
 					tags,
 					security,
 					params: PlaylistIdParams,
@@ -197,6 +208,8 @@ export const playlistsRoutes =
 			{
 				schema: {
 					summary: 'Move an entry after another one (null = first)',
+					description:
+						'409 STALE with the current state when the entry or its new neighbour was removed meanwhile.',
 					tags,
 					security,
 					params: PlaylistEntryParams,
@@ -213,6 +226,7 @@ export const playlistsRoutes =
 			{
 				schema: {
 					summary: 'Remove an entry',
+					description: '409 STALE with the current state when it was already removed.',
 					tags,
 					security,
 					params: PlaylistEntryParams,

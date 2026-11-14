@@ -1,5 +1,6 @@
 import Fastify, { type FastifyInstance } from 'fastify';
 import cors from '@fastify/cors';
+import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
 import {
 	serializerCompiler,
@@ -11,7 +12,7 @@ import type { Env } from './config/env.js';
 import type { PrismaClient } from './db.js';
 import type { Mailer } from './mail/mailer.js';
 import { registerActionLog } from './plugins/action-log.js';
-import { registerAuth } from './plugins/auth.js';
+import { type AccessClaims, registerAuth } from './plugins/auth.js';
 import { httpError, registerErrorHandlers } from './plugins/errors.js';
 import { registerSwagger } from './plugins/swagger.js';
 import { healthRoutes } from './modules/health/routes.js';
@@ -58,9 +59,15 @@ export type AppDeps = {
 	previewMs?: number;
 };
 
+// Every body of the API is a small JSON document.
+const BODY_LIMIT_BYTES = 100 * 1024;
+
 export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
 	const { env, prisma, mailer } = deps;
-	const app = Fastify({ logger: { level: env.LOG_LEVEL } }).withTypeProvider<ZodTypeProvider>();
+	const app = Fastify({
+		logger: { level: env.LOG_LEVEL },
+		bodyLimit: BODY_LIMIT_BYTES,
+	}).withTypeProvider<ZodTypeProvider>();
 	app.setValidatorCompiler(validatorCompiler);
 	app.setSerializerCompiler(serializerCompiler);
 	registerErrorHandlers(app);
@@ -69,13 +76,33 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
 		methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE'],
 	});
 	await registerSwagger(app);
+	// The only HTML served is the interactive docs, which need their own script and style rules.
+	await app.register(helmet, (instance) => ({
+		contentSecurityPolicy: {
+			directives: {
+				'default-src': ["'self'"],
+				'img-src': ["'self'", 'data:', 'validator.swagger.io'],
+				'script-src': ["'self'", ...instance.swaggerCSP.script],
+				'style-src': ["'self'", 'https:', ...instance.swaggerCSP.style],
+			},
+		},
+	}));
 	await registerAuth(app, env);
 	registerActionLog(app, prisma);
-	// Opt-in per route; runs after validation so the key can use the normalised email.
+	// Every route: a budget per logged-in user, per address otherwise. Runs before anything
+	// is parsed; routes add stricter buckets of their own.
 	await app.register(rateLimit, {
-		global: false,
-		hook: 'preHandler',
-		keyGenerator: (req) => (req.body as { email?: string } | undefined)?.email ?? req.ip,
+		global: true,
+		max: env.RATE_LIMIT_MAX,
+		timeWindow: '1 minute',
+		keyGenerator: (req) => {
+			try {
+				const token = req.headers.authorization?.replace(/^Bearer /i, '') ?? '';
+				return `user:${app.jwt.verify<AccessClaims>(token).sub}`;
+			} catch {
+				return req.ip;
+			}
+		},
 		errorResponseBuilder: (_req, ctx) =>
 			httpError(429, 'RATE_LIMITED', `Too many requests, retry in ${ctx.after}`),
 	});
@@ -103,7 +130,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
 		linkBase: env.APP_LINK_URL,
 	});
 	await app.register(healthRoutes(prisma), { prefix: API_PREFIX });
-	await app.register(authRoutes(auth), { prefix: API_PREFIX });
+	await app.register(authRoutes(auth, env.AUTH_RATE_LIMIT_MAX), { prefix: API_PREFIX });
 	// Ending a friendship revokes device control both ways.
 	let onUnfriend: (a: string, b: string) => Promise<void> = async () => undefined;
 	const friends = createFriendsService({ prisma, onUnfriend: (a, b) => onUnfriend(a, b) });
@@ -124,6 +151,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
 				realtime.emitTo(`event:${eventId}`, 'event:deleted', { eventId });
 			},
 			onAccessLost: (eventId, userId) => realtime.kick(userId, `event:${eventId}`),
+			onRestricted: (eventId) => realtime.recheck(`event:${eventId}`),
 		},
 	});
 	realtime.registerRoom('event', async (userId, id) => {
@@ -150,6 +178,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
 			onDeleted: (id) =>
 				realtime.emitTo(`playlist:${id}`, 'playlist:deleted', { playlistId: id }),
 			onAccessLost: (id, userId) => realtime.kick(userId, `playlist:${id}`),
+			onRestricted: (id) => realtime.recheck(`playlist:${id}`),
 		},
 	});
 	realtime.registerRoom('playlist', async (userId, id) => {
@@ -160,11 +189,14 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
 
 	const devices = createDevicesService({ prisma, friends, realtime });
 	onUnfriend = devices.revokeBetween;
-	realtime.registerRoom('remote', devices.canControl);
+	realtime.registerRoom('remote', devices.canJoin);
 	realtime.on('device:command', devices.onCommand);
 	realtime.on('device:status', devices.onStatus);
 	await app.register(devicesRoutes(devices), { prefix: API_PREFIX });
-	app.addHook('onClose', async () => queue.stop());
+	app.addHook('onClose', async () => {
+		queue.stop();
+		devices.stop();
+	});
 	const verifier = deps.socialVerifier ?? createSocialVerifier(env);
 	const social = createSocialService({ prisma, verifier, auth });
 	await app.register(socialRoutes(social), { prefix: API_PREFIX });

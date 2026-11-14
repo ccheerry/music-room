@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { FastifyRequest } from 'fastify';
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import {
 	EmailBody,
@@ -11,20 +12,46 @@ import {
 	VerifyBody,
 } from '@music-room/shared';
 import { clientInfo } from '../../plugins/action-log.js';
+import { httpError } from '../../plugins/errors.js';
 import type { AuthService } from './service.js';
 
 const tags = ['auth'];
 const NoContent = z.null().describe('Done');
-// Mail-sending routes: 5 per address per 15 minutes.
-const mailLimit = { rateLimit: { max: 5, timeWindow: '15 minutes' } };
+const WINDOW = '15 minutes';
 
 export const authRoutes =
-	(auth: AuthService): FastifyPluginAsyncZod =>
+	(auth: AuthService, maxPerAddress: number): FastifyPluginAsyncZod =>
 	async (app) => {
+		// Guessable routes: a budget per address, whatever the email tried.
+		const perAddress = {
+			rateLimit: {
+				max: maxPerAddress,
+				timeWindow: WINDOW,
+				keyGenerator: (req: FastifyRequest) => `auth:${req.ip}`,
+			},
+		};
+		// Mail-sending routes: also 5 per mailbox, checked once the email is validated.
+		const mailbox = app.createRateLimit({
+			max: 5,
+			timeWindow: WINDOW,
+			keyGenerator: (req) => `mail:${(req.body as { email: string }).email}`,
+		});
+		const perMailbox = async (req: FastifyRequest) => {
+			const limit = await mailbox(req);
+			if (limit.isAllowed || !limit.isExceeded) return;
+			throw httpError(
+				429,
+				'RATE_LIMITED',
+				`Too many requests, retry in ${limit.ttlInSeconds} seconds`,
+				undefined,
+				{ 'retry-after': String(limit.ttlInSeconds) },
+			);
+		};
 		app.post(
 			'/auth/register',
 			{
-				config: mailLimit,
+				config: perAddress,
+				preHandler: perMailbox,
 				schema: {
 					summary: 'Create an account and send the verification mail',
 					description:
@@ -45,6 +72,7 @@ export const authRoutes =
 			{
 				schema: {
 					summary: 'Confirm an email with the token from the verification mail',
+					description: 'The token is single use and valid for 24 hours.',
 					tags,
 					body: VerifyBody,
 					response: { 204: NoContent, 400: ErrorBody },
@@ -59,7 +87,8 @@ export const authRoutes =
 		app.post(
 			'/auth/resend-verification',
 			{
-				config: mailLimit,
+				config: perAddress,
+				preHandler: perMailbox,
 				schema: {
 					summary: 'Send the verification mail again',
 					description: 'Always 204, whether or not the account exists.',
@@ -77,13 +106,22 @@ export const authRoutes =
 		app.post(
 			'/auth/login',
 			{
+				config: perAddress,
 				schema: {
 					summary: 'Log in with email and password',
 					description:
 						'Registers the calling device from the X-Platform, X-Device and X-App-Version headers.',
 					tags,
 					body: LoginBody,
-					response: { 200: TokenPair, 400: ErrorBody, 401: ErrorBody, 403: ErrorBody },
+					response: {
+						200: TokenPair,
+						400: ErrorBody,
+						401: ErrorBody,
+						403: ErrorBody,
+						429: ErrorBody.describe(
+							'Too many attempts from this address, or too many failures for this email',
+						),
+					},
 				},
 			},
 			async (req) => {
@@ -117,6 +155,8 @@ export const authRoutes =
 			{
 				schema: {
 					summary: 'Revoke the session of a refresh token',
+					description:
+						'Ends that session on its device. Always 204, also for an unknown token.',
 					tags,
 					body: RefreshBody,
 					response: { 204: NoContent, 400: ErrorBody },
@@ -131,7 +171,8 @@ export const authRoutes =
 		app.post(
 			'/auth/forgot-password',
 			{
-				config: mailLimit,
+				config: perAddress,
+				preHandler: perMailbox,
 				schema: {
 					summary: 'Send a password reset mail',
 					description: 'Always 204, whether or not the account exists.',

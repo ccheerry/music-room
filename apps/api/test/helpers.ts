@@ -13,11 +13,24 @@ import { fakeDeezerFetch } from './fixtures/deezer.js';
 export type TestApp = { app: FastifyInstance; prisma: PrismaClient; mails: Mail[] };
 
 // Real Postgres, fake mailer that keeps every message in memory.
-export async function buildTestApp(
-	options: { previewMs?: number; deezerFetch?: typeof fetch } = {},
-): Promise<TestApp> {
-	// Fixed link base: the local .env may point mails at Expo Go.
-	const env = loadEnv({ ...process.env, LOG_LEVEL: 'silent', APP_LINK_URL: 'musicroom://' });
+export async function buildTestApp({
+	env: envOverrides,
+	...options
+}: {
+	previewMs?: number;
+	deezerFetch?: typeof fetch;
+	env?: Record<string, string>;
+} = {}): Promise<TestApp> {
+	// Fixed link base: the local .env may point mails at Expo Go. Request limits are lifted:
+	// every test comes from the same address; they are tested on their own.
+	const env = loadEnv({
+		...process.env,
+		LOG_LEVEL: 'silent',
+		APP_LINK_URL: 'musicroom://',
+		RATE_LIMIT_MAX: '1000000',
+		AUTH_RATE_LIMIT_MAX: '1000000',
+		...envOverrides,
+	});
 	const prisma = createPrisma(env.DATABASE_URL);
 	const mails: Mail[] = [];
 	const mailer = { send: async (mail: Mail) => void mails.push(mail) };

@@ -33,7 +33,7 @@ export async function registerAuth(app: FastifyInstance, env: Env): Promise<void
 		verify: { algorithms: ['HS256'] },
 	});
 	app.decorateRequest('actor', null);
-	// preHandler for every route that needs a logged-in user.
+	// onRequest hook of every route that needs a logged-in user: nothing is parsed before it.
 	app.decorate('authenticate', async (req: FastifyRequest) => {
 		try {
 			await req.jwtVerify();

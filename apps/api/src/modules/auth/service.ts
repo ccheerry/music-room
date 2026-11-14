@@ -10,6 +10,7 @@ import {
 import type { PrismaClient } from '../../db.js';
 import { Prisma } from '../../generated/prisma/client.js';
 import type { Mail, Mailer } from '../../mail/mailer.js';
+import { createLru } from '../../lib/lru.js';
 import { hashToken, randomToken } from '../../lib/tokens.js';
 import { httpError } from '../../plugins/errors.js';
 import { ACCESS_TTL_SEC, type AccessClaims, type Actor } from '../../plugins/auth.js';
@@ -23,6 +24,11 @@ const REFRESH_TTL_MS = 30 * 24 * HOUR_MS;
 
 // Checked when the email is unknown, so both login paths cost one argon2 run.
 const DUMMY_HASH = await argon2.hash(randomToken());
+
+// Login backoff: after this many failures in a row an email is locked, twice longer each time.
+const FREE_FAILURES = 5;
+const FIRST_LOCK_MS = 30 * 1000;
+const MAX_LOCK_MS = 15 * 60 * 1000;
 
 type EmailKind = 'VERIFY' | 'RESET';
 export type Session = { actor: Actor; tokens: TokenPair };
@@ -142,10 +148,41 @@ export function createAuthService({ prisma, mailer, log, signAccess, linkBase }:
 		});
 	}
 
+	// shortcut: per-instance memory, move to Redis when running several API instances.
+	const failures = createLru<{ count: number; lockedUntil: number }>(10_000, HOUR_MS);
+
+	// Same behaviour for unknown emails, so a lock says nothing about an account existing.
+	function assertNotLocked(email: string): void {
+		const waitMs = (failures.get(email)?.lockedUntil ?? 0) - Date.now();
+		if (waitMs <= 0) return;
+		const seconds = Math.ceil(waitMs / 1000);
+		throw httpError(
+			429,
+			'RATE_LIMITED',
+			`Too many failed attempts, retry in ${seconds} seconds`,
+			undefined,
+			{ 'retry-after': String(seconds) },
+		);
+	}
+
+	function recordFailure(email: string): void {
+		const count = (failures.get(email)?.count ?? 0) + 1;
+		const lockMs =
+			count < FREE_FAILURES
+				? 0
+				: Math.min(FIRST_LOCK_MS * 2 ** (count - FREE_FAILURES), MAX_LOCK_MS);
+		failures.set(email, { count, lockedUntil: Date.now() + lockMs });
+	}
+
 	async function login({ email, password }: LoginBody, client: ClientInfo): Promise<Session> {
+		assertNotLocked(email);
 		const user = await prisma.user.findUnique({ where: { email } });
 		const ok = await argon2.verify(user?.passwordHash ?? DUMMY_HASH, password);
-		if (!user?.passwordHash || !ok) throw invalidCredentials();
+		if (!user?.passwordHash || !ok) {
+			recordFailure(email);
+			throw invalidCredentials();
+		}
+		failures.delete(email);
 		if (!user.emailVerifiedAt) {
 			throw httpError(403, AuthErrorCode.EmailNotVerified, 'Confirm your email first');
 		}
