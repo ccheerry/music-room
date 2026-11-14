@@ -11,9 +11,10 @@ const DeezerTrack = z.object({
 	id: z.number(),
 	title: z.string(),
 	duration: z.number(),
-	preview: z.string().optional(),
+	// Deezer sends these as null, empty or not at all.
+	preview: z.string().nullish(),
 	artist: z.object({ name: z.string() }),
-	album: z.object({ title: z.string(), cover_medium: z.string().optional() }),
+	album: z.object({ title: z.string(), cover_medium: z.string().nullish() }),
 });
 const DeezerError = z.object({ error: z.object({ code: z.number().optional() }) });
 const DeezerSearch = z.object({ data: z.array(DeezerTrack) });

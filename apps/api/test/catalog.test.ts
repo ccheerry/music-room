@@ -59,6 +59,19 @@ describe('GET /tracks/:deezerId', () => {
 	});
 });
 
+describe('upstream errors', () => {
+	it('reach the client with their own status and code, not as a 500', async () => {
+		const down = await buildTestApp({
+			deezerFetch: (async () => new Response('x', { status: 500 })) as typeof fetch,
+		});
+		const u = await createUser(down);
+		const res = await call(down, 'GET', '/tracks/search?q=x', u);
+		expect(res.statusCode).toBe(502);
+		expect(res.json().error.code).toBe('CATALOG_UNAVAILABLE');
+		await closeTestApp(down);
+	});
+});
+
 describe('GET /genres', () => {
 	it('drops the "All" pseudo-genre', async () => {
 		const res = await call(t, 'GET', '/genres', user);
@@ -73,6 +86,19 @@ describe('Deezer client', () => {
 			.mockResolvedValue(new Response(JSON.stringify({ ...deezerTrack(5), preview: '' })));
 		const deezer = createDeezerClient({ fetch });
 		expect((await deezer.track(5)).previewUrl).toBeNull();
+	});
+
+	it('accepts null covers and previews, as Deezer sends them', async () => {
+		const body = {
+			...deezerTrack(6),
+			preview: null,
+			album: { title: 'A', cover_medium: null },
+		};
+		const fetch = vi.fn().mockResolvedValue(new Response(JSON.stringify(body)));
+		expect(await createDeezerClient({ fetch }).track(6)).toMatchObject({
+			coverUrl: null,
+			previewUrl: null,
+		});
 	});
 
 	it('answers 502 when Deezer sends something unexpected', async () => {
