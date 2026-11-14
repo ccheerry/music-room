@@ -8,5 +8,11 @@ export default defineConfig({
 		environment: 'node',
 		globalSetup: './test/global-setup.ts',
 		env: DATABASE_URL ? { DATABASE_URL } : {},
+		coverage: {
+			include: ['src/**'],
+			// Generated client, and the two files that only wire real services at startup.
+			exclude: ['src/generated/**', 'src/server.ts', 'src/mail/mailer.ts'],
+			thresholds: { lines: 80, functions: 80, branches: 80, statements: 80 },
+		},
 	},
 });
