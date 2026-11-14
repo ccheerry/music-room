@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { EventState } from './events.js';
 import type { PlaylistState } from './playlists.js';
+import type { DeviceCommand, DeviceStatus, RelayedCommand } from './devices.js';
 
 // Rooms a client may ask to join; each kind is authorised by its owning module.
 // "remote" is the controllers' room of a device (the device itself sits in device:<id>).
@@ -43,9 +44,14 @@ export interface ServerToClientEvents {
 	'event:deleted': (payload: { eventId: string }) => void;
 	'playlist:state': (state: PlaylistState) => void;
 	'playlist:deleted': (payload: { playlistId: string }) => void;
+	'device:command': (command: RelayedCommand) => void;
+	'device:status': (status: DeviceStatus) => void;
+	'device:revoked': (payload: { deviceId: string }) => void;
 }
 
 export interface ClientToServerEvents {
 	'room:join': (room: RoomRef, ack: (result: Ack) => void) => void;
 	'room:leave': (room: RoomRef, ack: (result: Ack) => void) => void;
+	'device:command': (command: DeviceCommand, ack: (result: Ack) => void) => void;
+	'device:status': (status: DeviceStatus, ack: (result: Ack) => void) => void;
 }
