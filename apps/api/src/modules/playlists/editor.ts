@@ -1,10 +1,11 @@
 import { generateKeyBetween } from 'fractional-indexing';
 import type { PlaylistState } from '@music-room/shared';
 import type { PrismaClient } from '../../db.js';
+import { listFull, PLAYLIST_CAP } from '../../lib/limits.js';
 import { httpError } from '../../plugins/errors.js';
 import type { CatalogService } from '../catalog/service.js';
 import { toTrack } from '../catalog/service.js';
-import { loadEditable, loadVisible } from './access.js';
+import { loadEditable, loadVisible, playlistNotFound } from './access.js';
 
 type Tx = Parameters<Parameters<PrismaClient['$transaction']>[0]>[0];
 type EditorDeps = {
@@ -68,7 +69,11 @@ export function createPlaylistEditor({ prisma, catalog, broadcast }: EditorDeps)
 	): Promise<PlaylistState> {
 		const missing: { message?: string } = {};
 		const result = await prisma.$transaction(async (tx) => {
-			await tx.$queryRaw`SELECT id FROM "Playlist" WHERE id = ${playlistId}::uuid FOR UPDATE`;
+			const rows = await tx.$queryRaw<
+				unknown[]
+			>`SELECT id FROM "Playlist" WHERE id = ${playlistId}::uuid FOR UPDATE`;
+			// Deleted while this operation waited for its turn.
+			if (rows.length === 0) throw playlistNotFound();
 			try {
 				await op(tx);
 			} catch (err) {
@@ -134,6 +139,9 @@ export function createPlaylistEditor({ prisma, catalog, broadcast }: EditorDeps)
 		await loadEditable(prisma, playlistId, userId);
 		const track = await catalog.getTrack(deezerId);
 		return locked(playlistId, async (tx) => {
+			if ((await tx.playlistEntry.count({ where: { playlistId } })) >= PLAYLIST_CAP) {
+				throw listFull('The playlist', PLAYLIST_CAP);
+			}
 			const position = await positionAfter(tx, playlistId, afterId);
 			await tx.playlistEntry.create({
 				data: { playlistId, trackId: track.id, position, addedById: userId },

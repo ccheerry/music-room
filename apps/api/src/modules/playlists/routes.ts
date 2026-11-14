@@ -191,12 +191,18 @@ export const playlistsRoutes =
 				schema: {
 					summary: 'Add a track',
 					description:
-						'afterEntryId: null puts it first, omitted puts it last. The same track may appear several times.',
+						'afterEntryId: null puts it first, omitted puts it last. The same track may appear several times. 422 LIST_FULL at 500 entries.',
 					tags,
 					security,
 					params: PlaylistIdParams,
 					body: AddEntryBody,
-					response: { 200: PlaylistState, ...editing, 502: ErrorBody, 503: ErrorBody },
+					response: {
+						200: PlaylistState,
+						...editing,
+						422: ErrorBody,
+						502: ErrorBody,
+						503: ErrorBody,
+					},
 				},
 			},
 			async (req) =>

@@ -111,6 +111,25 @@ describe('operations by id', () => {
 	});
 });
 
+describe('size limit', () => {
+	it('refuses an addition to a full playlist', async () => {
+		const { id } = await playlistWith(1);
+		const first = (await read(id)).entries[0]!;
+		const { generateNKeysBetween } = await import('fractional-indexing');
+		await t.prisma.playlistEntry.createMany({
+			data: generateNKeysBetween(first.position, null, 499).map((position) => ({
+				playlistId: id,
+				trackId: first.track.id,
+				position,
+				addedById: owner().id,
+			})),
+		});
+		const res = await call(t, 'POST', `/playlists/${id}/entries`, owner(), { deezerId: 100 });
+		expect(res.statusCode).toBe(422);
+		expect(res.json().error.code).toBe('LIST_FULL');
+	});
+});
+
 describe('room access', () => {
 	it('making a playlist private removes the strangers from its room', async () => {
 		const { id } = await playlistWith(1);
