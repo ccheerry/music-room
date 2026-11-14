@@ -31,6 +31,10 @@ import { canView as canViewEvent } from './modules/events/access.js';
 import { createEventQueue } from './modules/events/queue.js';
 import { eventsRoutes } from './modules/events/routes.js';
 import { createEventsService } from './modules/events/service.js';
+import { canView as canViewPlaylist } from './modules/playlists/access.js';
+import { createPlaylistEditor } from './modules/playlists/editor.js';
+import { playlistsRoutes } from './modules/playlists/routes.js';
+import { createPlaylistsService } from './modules/playlists/service.js';
 
 declare module 'fastify' {
 	interface FastifyInstance {
@@ -117,6 +121,31 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
 	});
 	await app.register(eventsRoutes(events, queue), { prefix: API_PREFIX });
 	app.addHook('onReady', () => queue.resume());
+
+	const editor = createPlaylistEditor({
+		prisma,
+		catalog,
+		broadcast: (state) =>
+			realtime.emitTo(`playlist:${state.playlistId}`, 'playlist:state', state),
+	});
+	const playlists = createPlaylistsService({
+		prisma,
+		hooks: {
+			onChanged: (id) =>
+				void editor
+					.state(id)
+					.then((state) => realtime.emitTo(`playlist:${id}`, 'playlist:state', state))
+					.catch(() => undefined),
+			onDeleted: (id) =>
+				realtime.emitTo(`playlist:${id}`, 'playlist:deleted', { playlistId: id }),
+			onAccessLost: (id, userId) => realtime.kick(userId, `playlist:${id}`),
+		},
+	});
+	realtime.registerRoom('playlist', async (userId, id) => {
+		const playlist = await prisma.playlist.findUnique({ where: { id } });
+		return !!playlist && (await canViewPlaylist(prisma, playlist, userId));
+	});
+	await app.register(playlistsRoutes(playlists, editor), { prefix: API_PREFIX });
 	app.addHook('onClose', async () => queue.stop());
 	const verifier = deps.socialVerifier ?? createSocialVerifier(env);
 	const social = createSocialService({ prisma, verifier, auth });

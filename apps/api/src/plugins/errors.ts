@@ -4,10 +4,16 @@ import type { ErrorBody } from '@music-room/shared';
 
 const body = (code: string, message: string): ErrorBody => ({ error: { code, message } });
 
-export type HttpError = Error & { statusCode: number; code: string };
+// `extra` is merged into the body next to `error` (e.g. the current state on a conflict).
+export type HttpError = Error & { statusCode: number; code: string; extra?: object };
 
-export function httpError(statusCode: number, code: string, message: string): HttpError {
-	return Object.assign(new Error(message), { statusCode, code });
+export function httpError(
+	statusCode: number,
+	code: string,
+	message: string,
+	extra?: object,
+): HttpError {
+	return Object.assign(new Error(message), { statusCode, code, extra });
 }
 
 // Every error leaves as { error: { code, message } }; 5xx details stay in the logs.
@@ -21,7 +27,8 @@ export function registerErrorHandlers(app: FastifyInstance): void {
 			req.log.error({ err }, 'unhandled error');
 			return reply.status(500).send(body('INTERNAL_ERROR', 'Internal server error'));
 		}
-		return reply.status(status).send(body(err.code ?? 'ERROR', err.message));
+		const extra = (err as Partial<HttpError>).extra;
+		return reply.status(status).send({ ...extra, ...body(err.code ?? 'ERROR', err.message) });
 	});
 
 	app.setNotFoundHandler((_req, reply) => reply.status(404).send(body('NOT_FOUND', 'Not found')));

@@ -30,6 +30,9 @@ model User {
   eventInvites  EventInvite[]
   suggestions   EventTrack[]
   votes         Vote[]
+  playlists     Playlist[]
+  memberships   PlaylistMember[]
+  playlistAdds  PlaylistEntry[]
 
   @@index([displayName])
 }
@@ -154,7 +157,8 @@ model Track {
   durationSec Int
   updatedAt   DateTime @updatedAt
 
-  eventEntries EventTrack[]
+  eventEntries    EventTrack[]
+  playlistEntries PlaylistEntry[]
 }
 
 enum Visibility {
@@ -232,4 +236,54 @@ model Vote {
   user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([eventTrackId, userId])
+}
+
+enum EditLicense {
+  EVERYONE
+  INVITED
+}
+
+model Playlist {
+  id          String      @id @default(uuid()) @db.Uuid
+  ownerId     String      @db.Uuid
+  name        String
+  visibility  Visibility  @default(PUBLIC)
+  editLicense EditLicense @default(EVERYONE)
+  version     Int         @default(0)
+  createdAt   DateTime    @default(now())
+
+  owner   User             @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  members PlaylistMember[]
+  entries PlaylistEntry[]
+
+  @@index([ownerId])
+  @@index([visibility, createdAt])
+}
+
+model PlaylistMember {
+  playlistId String   @db.Uuid
+  userId     String   @db.Uuid
+  createdAt  DateTime @default(now())
+
+  playlist Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([playlistId, userId])
+  @@index([userId])
+}
+
+// position: fractional index; the migration sets COLLATE "C" so it sorts byte by byte.
+model PlaylistEntry {
+  id         String   @id @default(uuid()) @db.Uuid
+  playlistId String   @db.Uuid
+  trackId    Int
+  position   String
+  addedById  String   @db.Uuid
+  createdAt  DateTime @default(now())
+
+  playlist Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  track    Track    @relation(fields: [trackId], references: [deezerId])
+  addedBy  User     @relation(fields: [addedById], references: [id], onDelete: Cascade)
+
+  @@unique([playlistId, position])
 }
