@@ -2033,7 +2033,7 @@
 				"tags": [
 					"me"
 				],
-				"description": "Needs the current password; 403 INVALID_CREDENTIALS when it is wrong.",
+				"description": "Needs the current password; 403 INVALID_CREDENTIALS when it is wrong. Logs every other device out.",
 				"requestBody": {
 					"required": true,
 					"content": {
@@ -12279,7 +12279,7 @@
 				"tags": [
 					"playlists"
 				],
-				"description": "afterEntryId: null puts it first, omitted puts it last. The same track may appear several times.",
+				"description": "afterEntryId: null puts it first, omitted puts it last. The same track may appear several times. 422 LIST_FULL at 500 entries.",
 				"requestBody": {
 					"required": true,
 					"content": {
@@ -12797,6 +12797,44 @@
 									],
 									"additionalProperties": false,
 									"description": "STALE: an entry named in the request no longer exists"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Default Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"error": {
+											"type": "object",
+											"properties": {
+												"code": {
+													"type": "string"
+												},
+												"message": {
+													"type": "string"
+												}
+											},
+											"required": [
+												"code",
+												"message"
+											],
+											"additionalProperties": false
+										}
+									},
+									"required": [
+										"error"
+									],
+									"additionalProperties": false,
+									"example": {
+										"error": {
+											"code": "NOT_FOUND",
+											"message": "Event not found"
+										}
+									}
 								}
 							}
 						}

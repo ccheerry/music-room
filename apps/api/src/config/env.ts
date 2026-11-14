@@ -29,9 +29,14 @@ const EnvSchema = z.object({
 				.map((o) => o.trim())
 				.filter(Boolean),
 		),
+	// Set to true behind a reverse proxy, so limits and logs use the real client address.
+	TRUST_PROXY: z
+		.enum(['true', 'false'])
+		.default('false')
+		.transform((v) => v === 'true'),
 	// Requests per minute for one user (or one address when logged out).
 	RATE_LIMIT_MAX: z.coerce.number().int().positive().default(300),
-	// Login, sign-up and mail requests per 15 minutes for one address.
+	// Per address and per route (login, sign-up, resend, forgot password), every 15 minutes.
 	AUTH_RATE_LIMIT_MAX: z.coerce.number().int().positive().default(30),
 	// Social login is off until these are set. Google: every OAuth client id, comma-separated.
 	GOOGLE_CLIENT_IDS: z

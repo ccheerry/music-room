@@ -11,7 +11,7 @@ import { API_PREFIX } from '@music-room/shared';
 import type { Env } from './config/env.js';
 import type { PrismaClient } from './db.js';
 import type { Mailer } from './mail/mailer.js';
-import { registerActionLog } from './plugins/action-log.js';
+import { createActionLogWriter, registerActionLog } from './plugins/action-log.js';
 import { type AccessClaims, registerAuth } from './plugins/auth.js';
 import { httpError, registerErrorHandlers } from './plugins/errors.js';
 import { registerSwagger } from './plugins/swagger.js';
@@ -67,6 +67,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
 	const app = Fastify({
 		logger: { level: env.LOG_LEVEL },
 		bodyLimit: BODY_LIMIT_BYTES,
+		trustProxy: env.TRUST_PROXY,
 	}).withTypeProvider<ZodTypeProvider>();
 	app.setValidatorCompiler(validatorCompiler);
 	app.setSerializerCompiler(serializerCompiler);
@@ -88,7 +89,8 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
 		},
 	}));
 	await registerAuth(app, env);
-	registerActionLog(app, prisma);
+	const actionLog = createActionLogWriter(prisma, app.log);
+	registerActionLog(app, actionLog);
 	// Every route: a budget per logged-in user, per address otherwise. Runs before anything
 	// is parsed; routes add stricter buckets of their own.
 	await app.register(rateLimit, {
@@ -111,7 +113,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
 		server: app.server,
 		corsOrigins: env.CORS_ORIGINS,
 		verify: (token) => app.jwt.verify(token),
-		prisma,
+		actionLog,
 		log: app.log,
 	});
 	app.addHook('preClose', async () => {
@@ -196,6 +198,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
 	app.addHook('onClose', async () => {
 		queue.stop();
 		devices.stop();
+		await actionLog.close();
 	});
 	const verifier = deps.socialVerifier ?? createSocialVerifier(env);
 	const social = createSocialService({ prisma, verifier, auth });
