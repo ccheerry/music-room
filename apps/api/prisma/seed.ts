@@ -71,5 +71,24 @@ for (const [from, to, accepted] of FRIENDSHIPS) {
 	});
 }
 
+// A demo event and playlist owned by Alice (tracks are added from the app: they come from Deezer).
+const alice = ids.get('Alice')!;
+const bob = ids.get('Bob')!;
+if (!(await prisma.event.findFirst({ where: { ownerId: alice, name: 'Friday party' } }))) {
+	await prisma.event.create({
+		data: { ownerId: alice, name: 'Friday party', invites: { create: { userId: bob } } },
+	});
+}
+if (!(await prisma.playlist.findFirst({ where: { ownerId: alice, name: 'Road trip' } }))) {
+	await prisma.playlist.create({
+		data: {
+			ownerId: alice,
+			name: 'Road trip',
+			editLicense: 'INVITED',
+			members: { create: { userId: bob } },
+		},
+	});
+}
+
 await prisma.$disconnect();
 process.stdout.write(`Seeded ${USERS.length} users (password: ${PASSWORD})\n`);
