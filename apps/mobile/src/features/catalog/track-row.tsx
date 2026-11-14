@@ -16,31 +16,30 @@ type TrackRowProps = {
 
 export function TrackRow({ track, onPress, subtitle, children }: TrackRowProps) {
 	const theme = useTheme();
+	// Actions sit next to the pressable area, never inside it (no nested buttons).
 	return (
-		<Pressable
-			accessibilityRole={onPress ? 'button' : undefined}
-			accessibilityLabel={`${track.title} by ${track.artist}`}
-			disabled={!onPress}
-			onPress={onPress}
-			style={({ pressed }) => [
-				styles.row,
-				{ backgroundColor: theme.backgroundElement },
-				pressed && styles.pressed,
-			]}
-		>
-			{track.coverUrl ? (
-				<Image source={track.coverUrl} style={styles.cover} />
-			) : (
-				<View style={[styles.cover, { backgroundColor: theme.backgroundSelected }]} />
-			)}
-			<View style={styles.text}>
-				<ThemedText numberOfLines={1}>{track.title}</ThemedText>
-				<ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
-					{subtitle ?? track.artist}
-				</ThemedText>
-			</View>
+		<View style={[styles.row, { backgroundColor: theme.backgroundElement }]}>
+			<Pressable
+				accessibilityRole={onPress ? 'button' : undefined}
+				accessibilityLabel={`${track.title} by ${track.artist}`}
+				disabled={!onPress}
+				onPress={onPress}
+				style={({ pressed }) => [styles.main, pressed && styles.pressed]}
+			>
+				{track.coverUrl ? (
+					<Image source={track.coverUrl} style={styles.cover} />
+				) : (
+					<View style={[styles.cover, { backgroundColor: theme.backgroundSelected }]} />
+				)}
+				<View style={styles.text}>
+					<ThemedText numberOfLines={1}>{track.title}</ThemedText>
+					<ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
+						{subtitle ?? track.artist}
+					</ThemedText>
+				</View>
+			</Pressable>
 			{children}
-		</Pressable>
+		</View>
 	);
 }
 
@@ -52,6 +51,7 @@ const styles = StyleSheet.create({
 		gap: Spacing.two,
 		padding: Spacing.two,
 	},
+	main: { alignItems: 'center', flex: 1, flexDirection: 'row', gap: Spacing.two },
 	cover: { borderRadius: Radius.small, height: 48, width: 48 },
 	text: { flex: 1 },
 	pressed: { opacity: 0.7 },

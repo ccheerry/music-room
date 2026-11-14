@@ -15,27 +15,24 @@ type ListRowProps = {
 
 export function ListRow({ title, subtitle, onPress, children }: ListRowProps) {
 	const theme = useTheme();
+	// Children (buttons) sit next to the pressable area, never inside it.
 	return (
-		<Pressable
-			accessibilityRole={onPress ? 'button' : undefined}
-			disabled={!onPress}
-			onPress={onPress}
-			style={({ pressed }) => [
-				styles.row,
-				{ backgroundColor: theme.backgroundElement },
-				pressed && styles.pressed,
-			]}
-		>
-			<View style={styles.text}>
+		<View style={[styles.row, { backgroundColor: theme.backgroundElement }]}>
+			<Pressable
+				accessibilityRole={onPress ? 'button' : undefined}
+				disabled={!onPress}
+				onPress={onPress}
+				style={({ pressed }) => [styles.text, pressed && styles.pressed]}
+			>
 				<ThemedText numberOfLines={1}>{title}</ThemedText>
 				{subtitle ? (
 					<ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
 						{subtitle}
 					</ThemedText>
 				) : null}
-			</View>
+			</Pressable>
 			{children}
-		</Pressable>
+		</View>
 	);
 }
 
