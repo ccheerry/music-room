@@ -81,5 +81,5 @@ export const DeviceStatus = z.strictObject({
 });
 export type DeviceStatus = z.infer<typeof DeviceStatus>;
 
-// The device reports its status this often while playing.
+// The device reports its status this often while it is connected.
 export const DEVICE_STATUS_EVERY_MS = 5000;

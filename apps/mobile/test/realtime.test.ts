@@ -20,6 +20,8 @@ describe('patchState', () => {
 		expect(qc.getQueryData(key)).toEqual({ version: 2, name: 'b' });
 		expect(patchState(qc, key, { version: 5, name: 'c' })).toBe(true);
 		expect(qc.getQueryData(key)).toEqual({ version: 5, name: 'c' });
+		// Drops the cache timers that would keep the test process alive.
+		qc.clear();
 	});
 });
 

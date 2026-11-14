@@ -22,7 +22,8 @@ export function useDeviceAgent() {
 		};
 		socket.on('device:command', onCommand);
 
-		// On every track / play state change, and periodically while playing.
+		// On every track / play state change, and periodically: a controller that
+		// opens the remote later must see the device, even when it is idle.
 		let last = '';
 		const unsubscribe = usePlayer.subscribe((s) => {
 			const key = `${s.track?.id}|${s.playing}|${s.volume}`;
@@ -31,10 +32,7 @@ export function useDeviceAgent() {
 				report();
 			}
 		});
-		const timer = setInterval(
-			() => usePlayer.getState().playing && report(),
-			DEVICE_STATUS_EVERY_MS,
-		);
+		const timer = setInterval(report, DEVICE_STATUS_EVERY_MS);
 		report();
 		return () => {
 			socket.off('device:command', onCommand);

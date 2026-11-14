@@ -2,6 +2,8 @@ import type { Track } from '@music-room/shared';
 import { type AudioPlayer, type AudioStatus, createAudioPlayer } from 'expo-audio';
 import { create } from 'zustand';
 
+import { getTrack } from '@/api/catalog';
+
 type LoadOptions = {
 	startMs?: number;
 	autoplay?: boolean;
@@ -33,6 +35,8 @@ type PlayerState = {
 // One audio player for the whole app, created on first use.
 let audio: AudioPlayer | null = null;
 let onEnd: (() => void) | undefined;
+// Bumped by every load and stop: a pending loadFresh from before is dropped.
+let generation = 0;
 
 function getAudio(set: (s: Partial<PlayerState>) => void): AudioPlayer {
 	if (audio) return audio;
@@ -58,6 +62,7 @@ export const usePlayer = create<PlayerState>()((set, get) => ({
 	volume: 1,
 	load: (track, options = {}) => {
 		const player = getAudio(set);
+		generation++;
 		onEnd = options.onEnd;
 		set({
 			track,
@@ -84,6 +89,7 @@ export const usePlayer = create<PlayerState>()((set, get) => ({
 	},
 	stop: () => {
 		audio?.pause();
+		generation++;
 		onEnd = undefined;
 		set({
 			track: null,
@@ -95,3 +101,11 @@ export const usePlayer = create<PlayerState>()((set, get) => ({
 		});
 	},
 }));
+
+// Preview links expire minutes after Deezer signs them: stored tracks (playlists, old
+// search results) are asked again right before playing.
+export async function loadFresh(track: Track, options?: LoadOptions): Promise<void> {
+	const mine = ++generation;
+	const fresh = await getTrack(track.id).catch(() => track);
+	if (mine === generation) usePlayer.getState().load(fresh, options);
+}

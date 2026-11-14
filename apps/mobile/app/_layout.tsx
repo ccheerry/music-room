@@ -7,6 +7,7 @@ import { queryClient } from '@/api/query-client';
 import { ThemedText } from '@/components/themed-text';
 import { startSocket } from '@/realtime/socket';
 import { useSession } from '@/stores/session';
+import { wipeOnSignOut } from '@/stores/wipe-on-sign-out';
 
 const settingsLink = () => (
 	<Link href="/settings">
@@ -21,6 +22,7 @@ export default function RootLayout() {
 	useEffect(() => {
 		useSession.getState().restore();
 		startSocket();
+		return wipeOnSignOut();
 	}, []);
 
 	if (status === 'loading') return null;

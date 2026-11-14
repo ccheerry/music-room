@@ -27,7 +27,8 @@ const MESSAGES: Record<string, string> = {
 	INVALID_CREDENTIALS: 'Wrong email or password',
 	EMAIL_NOT_VERIFIED: 'Confirm your email first',
 	INVALID_TOKEN: 'This link is invalid or has expired',
-	RATE_LIMITED: 'Too many attempts, try again later',
+	UNAUTHORIZED: 'Your session has ended, log in again',
+	FORBIDDEN: 'You are not allowed to do this',
 	PROVIDER_IN_USE: 'This account is already linked to another user',
 	LAST_LOGIN_METHOD: 'Set a password or link another account before unlinking this one',
 	EMAIL_REQUIRED: 'Your account at this provider has no email; sign up with email instead',
@@ -45,6 +46,10 @@ const MESSAGES: Record<string, string> = {
 
 // Text shown to the user for any failed call.
 export function errorMessage(err: unknown): string {
+	// The server says how long to wait.
+	if (err instanceof ApiError && err.code === 'RATE_LIMITED') {
+		return err.message.replace(/^Too many \w+( \w+)?/, 'Too many attempts');
+	}
 	if (err instanceof ApiError) return MESSAGES[err.code] ?? err.message;
 	if (err instanceof UserError) return err.message;
 	return "Can't reach the server. Check the address in Settings.";

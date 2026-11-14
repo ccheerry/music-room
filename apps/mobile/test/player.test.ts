@@ -1,7 +1,8 @@
 import type { Track } from '@music-room/shared';
 import { act, renderHook } from '@testing-library/react-native';
 
-import { usePlayer } from '@/features/player/player';
+import { getTrack } from '@/api/catalog';
+import { loadFresh, usePlayer } from '@/features/player/player';
 import { useDebounced } from '@/hooks/use-debounced';
 
 type Listener = (status: object) => void;
@@ -18,6 +19,8 @@ const mockAudio = {
 };
 
 jest.mock('expo-audio', () => ({ createAudioPlayer: () => mockAudio }));
+jest.mock('@/api/catalog', () => ({ getTrack: jest.fn() }));
+const mockGetTrack = getTrack as jest.MockedFunction<typeof getTrack>;
 
 const TRACK: Track = {
 	id: 1,
@@ -108,5 +111,47 @@ describe('useDebounced', () => {
 		expect(result.current).toBe('d');
 		await act(() => jest.advanceTimersByTime(100));
 		expect(result.current).toBe('daft');
+	});
+});
+
+describe('loadFresh', () => {
+	const fresh = { ...TRACK, previewUrl: 'https://cdn.test/1-fresh.mp3' };
+
+	it('plays the preview link the server gives now, not the stored one', async () => {
+		mockGetTrack.mockResolvedValue(fresh);
+		await loadFresh(TRACK, { source: 'playlist:1' });
+		expect(mockGetTrack).toHaveBeenCalledWith(TRACK.id);
+		expect(mockAudio.replace).toHaveBeenCalledWith({ uri: fresh.previewUrl });
+		expect(usePlayer.getState().source).toBe('playlist:1');
+	});
+
+	it('falls back to the stored track when the server cannot be reached', async () => {
+		mockGetTrack.mockRejectedValue(new Error('offline'));
+		await loadFresh(TRACK);
+		expect(mockAudio.replace).toHaveBeenCalledWith({ uri: TRACK.previewUrl });
+	});
+
+	it('only the last request plays', async () => {
+		const other = { ...TRACK, id: 2, previewUrl: 'https://cdn.test/2.mp3' };
+		let answerFirst: (t: Track) => void = () => undefined;
+		mockGetTrack
+			.mockReturnValueOnce(new Promise((resolve) => (answerFirst = resolve)))
+			.mockResolvedValueOnce(other);
+		const first = loadFresh(TRACK);
+		await loadFresh(other);
+		answerFirst(fresh);
+		await first;
+		expect(mockAudio.replace).toHaveBeenCalledTimes(1);
+		expect(usePlayer.getState().track).toEqual(other);
+	});
+
+	it('is dropped when the player was stopped meanwhile', async () => {
+		let answer: (t: Track) => void = () => undefined;
+		mockGetTrack.mockReturnValueOnce(new Promise((resolve) => (answer = resolve)));
+		const pending = loadFresh(TRACK);
+		usePlayer.getState().stop();
+		answer(fresh);
+		await pending;
+		expect(mockAudio.replace).not.toHaveBeenCalled();
 	});
 });
