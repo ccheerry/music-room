@@ -39,6 +39,5 @@ jobs:
         working-directory: apps/api
       - run: npm run lint
       - run: npm run typecheck --workspaces --if-present
-      - run: npx prisma migrate deploy
-        working-directory: apps/api
+      # The api tests create, migrate and empty their own database (musicroom_test).
       - run: npm test --workspaces --if-present
