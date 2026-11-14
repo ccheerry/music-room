@@ -85,9 +85,9 @@ address can be changed from its settings.
 ```bash
 cp .env.example .env          # fill in the OAuth client ids
 make install                  # npm ci for every workspace
-make up                       # postgres + mailpit + api in Docker
+docker compose up -d postgres mailpit
 make migrate seed             # schema + demo users, an event and a playlist
-make mobile                   # Expo dev server, scan the QR code
+make dev                      # api in watch mode + Expo, scan the QR code
 ```
 
 API on `http://localhost:3000`, interactive docs on `http://localhost:3000/docs`,
@@ -111,7 +111,7 @@ Every phone in the event's room receives the same `event:state` with the new
 ### Concurrency, tested
 
 ```bash
-make test                     # unit + integration, Postgres in Docker
+make test                     # unit + integration, on its own musicroom_test database
 ```
 
 The integration suite fires 50 votes from 50 users at once and checks every

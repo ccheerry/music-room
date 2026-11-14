@@ -48,16 +48,19 @@ Nothing is vendored: every dependency is downloaded by `make install`.
 ```bash
 cp .env.example .env    # fill in the values described below
 make install            # install every workspace
-make up                 # start postgres, mailpit and the api in Docker
+docker compose up -d postgres mailpit
 make migrate seed       # apply the schema and load demo data
-make mobile             # start the Expo dev server
+make dev                # api in watch mode + Expo dev server
 ```
+
+`make up` runs the API in Docker instead, on the same port 3000: use either `make up` or `make dev`, not both at once.
 
 Every variable is listed in `.env.example`. `.env` is git-ignored, and the API refuses to start if a required variable is missing.
 
 | Variable | Purpose |
 |---|---|
 | `DATABASE_URL` | PostgreSQL connection |
+| `TEST_DATABASE_URL` | Optional, database used by the API tests (default: `DATABASE_URL` with `_test` appended) |
 | `JWT_SECRET` | Access token signature, at least 32 characters (`openssl rand -base64 48`) |
 | `CORS_ORIGINS` | Browser origins allowed to call the API (Expo Web), comma-separated |
 | `SMTP_HOST` / `SMTP_PORT` | Mail server (Mailpit in development) |
@@ -117,7 +120,8 @@ make fclean    # also remove volumes, local images and node_modules
 
 ## Testing
 
-- `make test` runs unit tests, integration tests against a real PostgreSQL (start it with `make up` or `docker compose up -d postgres`), socket tests and mobile component tests.
+- `make test` runs unit tests, integration tests against a real PostgreSQL (start it with `docker compose up -d postgres`), socket tests and mobile component tests.
+- The API tests never use the development database. They run on `TEST_DATABASE_URL`, by default the same server with `_test` appended to the database name (`musicroom_test`). Every run creates it if needed, applies the migrations and empties it; the runner refuses to start if it points to `DATABASE_URL`.
 - External services are replaced at their boundary in tests: the Deezer HTTP client and the Google / Facebook verifiers.
 - Concurrency is tested explicitly: simultaneous votes from many users, duplicated votes, simultaneous playlist moves, and random operation sequences from several clients (property-based) checking that the playlist order is always consistent.
 - `make loadtest` runs the load scenarios; method and results are in `docs/RAMP_UP.md`.
