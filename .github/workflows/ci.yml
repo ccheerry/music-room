@@ -29,11 +29,21 @@ jobs:
       JWT_SECRET: ci-only-secret-not-used-anywhere-else
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: No .env file is tracked
+        run: test -z "$(git ls-files | grep -E '(^|/)\.env(\..+)?$' | grep -v '\.env\.example$')"
+      - name: No secret in the history
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: npm
       - run: npm ci
+      # What ships in the API image; the Expo toolchain is audited by hand (see docs/SECURITY.md).
+      - run: npm audit --omit=dev -w @music-room/api -w @music-room/shared --audit-level=high
       - run: npm run build -w @music-room/shared
       - run: npx prisma generate
         working-directory: apps/api
