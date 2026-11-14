@@ -58,6 +58,19 @@ describe('register and verify', () => {
 		await login(email);
 	});
 
+	it('a second sign-up for an unverified address replaces the first one', async () => {
+		const email = uniqueEmail();
+		await post('/auth/register', { email, password: 'intruder11', displayName: 'Mallory' });
+		const stale = tokenFrom(t.mails, email, 'verify');
+		await register(email);
+		const token = tokenFrom(t.mails, email, 'verify');
+
+		expect((await post('/auth/verify-email', { token: stale })).statusCode).toBe(400);
+		expect((await post('/auth/verify-email', { token })).statusCode).toBe(204);
+		expect((await post('/auth/login', { email, password: 'intruder11' })).statusCode).toBe(401);
+		await login(email);
+	});
+
 	it('answers the same for an existing email and warns its owner by mail', async () => {
 		const email = await registerVerified();
 		const before = t.mails.length;
@@ -231,6 +244,45 @@ describe('passwords', () => {
 		expect(wrong.json().error.code).toBe('INVALID_CREDENTIALS');
 		expect((await change(PASSWORD)).statusCode).toBe(204);
 		await login(email, 'newpass99');
+	});
+
+	it('changing the password logs the other devices out, not this one', async () => {
+		const email = await registerVerified();
+		const here = await login(email);
+		const elsewhere = (
+			await post(
+				'/auth/login',
+				{ email, password: PASSWORD },
+				{ ...CLIENT, 'x-device': 'Another phone' },
+			)
+		).json<TokenPair>();
+		const res = await t.app.inject({
+			method: 'PUT',
+			url: '/api/v1/me/password',
+			headers: bearer(here),
+			payload: { currentPassword: PASSWORD, newPassword: 'newpass99' },
+		});
+		expect(res.statusCode).toBe(204);
+		const refresh = (tokens: TokenPair) =>
+			post('/auth/refresh', { refreshToken: tokens.refreshToken });
+		expect((await refresh(elsewhere)).statusCode).toBe(401);
+		expect((await refresh(here)).statusCode).toBe(200);
+	});
+
+	it('a used reset link kills the other reset links of the account', async () => {
+		const email = await registerVerified();
+		await post('/auth/forgot-password', { email });
+		const first = tokenFrom(t.mails, email, 'reset');
+		await post('/auth/forgot-password', { email });
+		const second = tokenFrom(t.mails, email, 'reset');
+		expect(
+			(await post('/auth/reset-password', { token: second, password: 'newpass99' }))
+				.statusCode,
+		).toBe(204);
+		expect(
+			(await post('/auth/reset-password', { token: first, password: 'other9999' }))
+				.statusCode,
+		).toBe(400);
 	});
 });
 

@@ -49,7 +49,7 @@ export const meRoutes =
 				schema: {
 					summary: 'Change the password',
 					description:
-						'Needs the current password; 403 INVALID_CREDENTIALS when it is wrong.',
+						'Needs the current password; 403 INVALID_CREDENTIALS when it is wrong. Logs every other device out.',
 					tags,
 					security,
 					body: ChangePasswordBody,
@@ -63,7 +63,7 @@ export const meRoutes =
 			},
 			async (req, reply) => {
 				await auth.changePassword(
-					req.user.sub,
+					{ userId: req.user.sub, deviceId: req.user.deviceId },
 					req.body.currentPassword,
 					req.body.newPassword,
 				);

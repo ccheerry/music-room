@@ -50,13 +50,10 @@ export type AuthDeps = {
 };
 
 export function createAuthService({ prisma, mailer, log, signAccess, linkBase }: AuthDeps) {
-	// A lost mail can be resent; it must not fail the request.
-	const send = async (mail: Mail) => {
-		try {
-			await mailer.send(mail);
-		} catch (err) {
-			log.error({ err }, 'mail send failed');
-		}
+	// Not awaited: a lost mail can be resent, and the answer must take the same time
+	// whether or not the address has an account.
+	const send = (mail: Mail): void => {
+		mailer.send(mail).catch((err: unknown) => log.error({ err }, 'mail send failed'));
 	};
 
 	async function issueEmailToken(userId: string, kind: EmailKind): Promise<string> {
@@ -124,11 +121,20 @@ export function createAuthService({ prisma, mailer, log, signAccess, linkBase }:
 		const existing = await prisma.user.findUnique({ where: { email } });
 		if (existing) {
 			if (existing.emailVerifiedAt) return send(alreadyRegisteredMail(email));
+			// Nobody proved this address yet: the latest sign-up replaces the earlier one, so
+			// whoever confirms the mail gets the password they chose themselves.
+			await prisma.$transaction([
+				prisma.user.update({
+					where: { id: existing.id },
+					data: { passwordHash, displayName },
+				}),
+				prisma.emailToken.deleteMany({ where: { userId: existing.id, kind: 'VERIFY' } }),
+			]);
 			return send(verifyMail(email, await issueEmailToken(existing.id, 'VERIFY'), linkBase));
 		}
 		try {
 			const user = await prisma.user.create({ data: { email, passwordHash, displayName } });
-			await send(verifyMail(email, await issueEmailToken(user.id, 'VERIFY'), linkBase));
+			send(verifyMail(email, await issueEmailToken(user.id, 'VERIFY'), linkBase));
 		} catch (err) {
 			if (!isUniqueViolation(err)) throw err;
 		}
@@ -137,7 +143,7 @@ export function createAuthService({ prisma, mailer, log, signAccess, linkBase }:
 	async function resendVerification(email: string): Promise<void> {
 		const user = await prisma.user.findUnique({ where: { email } });
 		if (!user || user.emailVerifiedAt) return;
-		await send(verifyMail(email, await issueEmailToken(user.id, 'VERIFY'), linkBase));
+		send(verifyMail(email, await issueEmailToken(user.id, 'VERIFY'), linkBase));
 	}
 
 	async function verifyEmail(token: string): Promise<void> {
@@ -239,7 +245,7 @@ export function createAuthService({ prisma, mailer, log, signAccess, linkBase }:
 	async function forgotPassword(email: string): Promise<void> {
 		const user = await prisma.user.findUnique({ where: { email } });
 		if (!user) return;
-		await send(resetMail(email, await issueEmailToken(user.id, 'RESET'), linkBase));
+		send(resetMail(email, await issueEmailToken(user.id, 'RESET'), linkBase));
 	}
 
 	// Proves ownership of the email, so it also marks it verified.
@@ -257,18 +263,31 @@ export function createAuthService({ prisma, mailer, log, signAccess, linkBase }:
 				where: { userId, revokedAt: null },
 				data: { revokedAt: now },
 			}),
+			// Other reset links still in the mailbox stop working too.
+			prisma.emailToken.deleteMany({ where: { userId, kind: 'RESET' } }),
 		]);
 	}
 
-	async function changePassword(userId: string, current: string, next: string): Promise<void> {
+	// Every other device is logged out; the one making the change keeps its session.
+	async function changePassword(
+		{ userId, deviceId }: Actor,
+		current: string,
+		next: string,
+	): Promise<void> {
 		const user = await prisma.user.findUnique({ where: { id: userId } });
 		if (!user?.passwordHash || !(await argon2.verify(user.passwordHash, current))) {
 			throw httpError(403, AuthErrorCode.InvalidCredentials, 'Current password is wrong');
 		}
-		await prisma.user.update({
-			where: { id: userId },
-			data: { passwordHash: await argon2.hash(next) },
-		});
+		await prisma.$transaction([
+			prisma.user.update({
+				where: { id: userId },
+				data: { passwordHash: await argon2.hash(next) },
+			}),
+			prisma.refreshToken.updateMany({
+				where: { userId, revokedAt: null, NOT: { deviceId } },
+				data: { revokedAt: new Date() },
+			}),
+		]);
 	}
 
 	return {
