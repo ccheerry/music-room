@@ -53,6 +53,7 @@ export type AppDeps = {
 	// Replaced in tests: providers and Deezer are mocked at these boundaries.
 	socialVerifier?: SocialVerifier;
 	deezerFetch?: typeof fetch;
+	deezerQuota?: { max: number; windowMs: number };
 	// Length of a played preview; shortened in tests.
 	previewMs?: number;
 };
@@ -110,7 +111,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
 	await app.register(meRoutes(auth, users), { prefix: API_PREFIX });
 	await app.register(usersRoutes(users), { prefix: API_PREFIX });
 	await app.register(friendsRoutes(friends), { prefix: API_PREFIX });
-	const deezer = createDeezerClient({ fetch: deps.deezerFetch });
+	const deezer = createDeezerClient({ fetch: deps.deezerFetch, quota: deps.deezerQuota });
 	const catalog = createCatalogService({ prisma, deezer });
 	await app.register(catalogRoutes(catalog), { prefix: API_PREFIX });
 

@@ -27,6 +27,8 @@ export async function buildTestApp(
 		mailer,
 		socialVerifier: fakeSocialVerifier,
 		deezerFetch: fakeDeezerFetch,
+		// The fake Deezer has no quota; the real one is tested on the client itself.
+		deezerQuota: { max: 100_000, windowMs: 5000 },
 		...options,
 	});
 	return { app, prisma, mails };

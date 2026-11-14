@@ -151,3 +151,14 @@ describe('search cache', () => {
 		expect(lru.get('c')).toBeUndefined();
 	});
 });
+
+describe('track snapshots under concurrency', () => {
+	it('stores a new track once when many requests ask for it at the same time', async () => {
+		const id = 7_000_000 + Math.floor(Math.random() * 100_000);
+		const results = await Promise.all(
+			Array.from({ length: 10 }, () => call(t, 'GET', `/tracks/${id}`, user)),
+		);
+		expect(results.map((r) => r.statusCode)).toEqual(results.map(() => 200));
+		expect(await t.prisma.track.count({ where: { deezerId: id } })).toBe(1);
+	});
+});
