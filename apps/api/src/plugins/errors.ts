@@ -5,7 +5,8 @@ import type { ErrorBody } from '@music-room/shared';
 const body = (code: string, message: string): ErrorBody => ({ error: { code, message } });
 
 // `extra` is merged into the body next to `error` (e.g. the current state on a conflict).
-export type HttpError = Error & { statusCode: number; code: string; extra?: object };
+// `expose` marks errors raised on purpose: their status and code reach the client, 5xx included.
+export type HttpError = Error & { statusCode: number; code: string; extra?: object; expose: true };
 
 export function httpError(
 	statusCode: number,
@@ -13,7 +14,7 @@ export function httpError(
 	message: string,
 	extra?: object,
 ): HttpError {
-	return Object.assign(new Error(message), { statusCode, code, extra });
+	return Object.assign(new Error(message), { statusCode, code, extra, expose: true as const });
 }
 
 // Every error leaves as { error: { code, message } }; 5xx details stay in the logs.
@@ -23,7 +24,7 @@ export function registerErrorHandlers(app: FastifyInstance): void {
 			return reply.status(400).send(body('VALIDATION_ERROR', err.message));
 		}
 		const status = err.statusCode ?? 500;
-		if (status >= 500) {
+		if (status >= 500 && !(err as Partial<HttpError>).expose) {
 			req.log.error({ err }, 'unhandled error');
 			return reply.status(500).send(body('INTERNAL_ERROR', 'Internal server error'));
 		}
