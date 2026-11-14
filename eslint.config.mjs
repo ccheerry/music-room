@@ -23,6 +23,25 @@ export default tseslint.config(
 		files: ['apps/mobile/**/*.{ts,tsx}'],
 		...reactHooks.configs.flat.recommended,
 	},
+	// Artillery loads its helpers as CommonJS.
+	{
+		files: ['loadtest/**/*.cjs'],
+		languageOptions: { globals: { require: 'readonly', module: 'writable' } },
+		rules: { '@typescript-eslint/no-require-imports': 'off' },
+	},
+	// Scripts run by Maestro, which provides these names.
+	{
+		files: ['apps/mobile/.maestro/**/*.js'],
+		languageOptions: {
+			globals: {
+				http: 'readonly',
+				json: 'readonly',
+				output: 'writable',
+				EMAIL: 'readonly',
+				MAILPIT_URL: 'readonly',
+			},
+		},
+	},
 	{
 		files: ['apps/mobile/**/*.{js,cjs}'],
 		languageOptions: {

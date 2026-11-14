@@ -5,5 +5,5 @@ coverage
 **/src/generated
 package-lock.json
 *.md
-.claude
 expo-env.d.ts
+docs/openapi.json

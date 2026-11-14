@@ -15,6 +15,7 @@
 	},
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
+		"artillery": "^2.0.34",
 		"eslint": "^10.13.0",
 		"eslint-config-prettier": "^10.1.8",
 		"eslint-plugin-prettier": "^5.5.7",
@@ -24,8 +25,9 @@
 		"typescript-eslint": "^8.72.0"
 	},
 	"scripts": {
-		"lint": "eslint . && prettier --check .",
-		"format": "prettier --write ."
+		"lint": "eslint . && npm run prettier -- --check",
+		"format": "npm run prettier -- --write",
+		"prettier": "prettier . --ignore-path .prettierignore --ignore-path .gitignore --ignore-path .git/info/exclude"
 	},
 	"overrides": {
 		"react": "19.3.0",
