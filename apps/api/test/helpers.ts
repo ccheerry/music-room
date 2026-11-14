@@ -13,7 +13,7 @@ import { fakeDeezerFetch } from './fixtures/deezer.js';
 export type TestApp = { app: FastifyInstance; prisma: PrismaClient; mails: Mail[] };
 
 // Real Postgres, fake mailer that keeps every message in memory.
-export async function buildTestApp(): Promise<TestApp> {
+export async function buildTestApp(options: { previewMs?: number } = {}): Promise<TestApp> {
 	// Fixed link base: the local .env may point mails at Expo Go.
 	const env = loadEnv({ ...process.env, LOG_LEVEL: 'silent', APP_LINK_URL: 'musicroom://' });
 	const prisma = createPrisma(env.DATABASE_URL);
@@ -25,6 +25,7 @@ export async function buildTestApp(): Promise<TestApp> {
 		mailer,
 		socialVerifier: fakeSocialVerifier,
 		deezerFetch: fakeDeezerFetch,
+		...options,
 	});
 	return { app, prisma, mails };
 }
@@ -161,3 +162,28 @@ export const nextEvent = <T = unknown>(
 	});
 
 export type { ClientSocket };
+
+let fastHash: Promise<string> | undefined;
+
+// Many users at once, without going through login (for concurrency tests).
+export async function createUsers(t: TestApp, count: number): Promise<TestUser[]> {
+	fastHash ??= argon2.hash(PASSWORD);
+	const passwordHash = await fastHash;
+	const data = Array.from({ length: count }, (_, i) => ({
+		id: randomUUID(),
+		email: uniqueEmail(),
+		displayName: `Voter ${i}`,
+		passwordHash,
+		emailVerifiedAt: new Date(),
+	}));
+	await t.prisma.user.createMany({ data });
+	return data.map(({ id, email }) => {
+		const accessToken = t.app.jwt.sign({ sub: id, deviceId: null });
+		return {
+			id,
+			email,
+			tokens: { accessToken, refreshToken: '', expiresIn: 900 },
+			auth: { authorization: `Bearer ${accessToken}` },
+		};
+	});
+}

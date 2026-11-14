@@ -26,6 +26,10 @@ model User {
   socialLinks   SocialAccount[]
   friendshipsA  Friendship[]   @relation("friendA")
   friendshipsB  Friendship[]   @relation("friendB")
+  events        Event[]
+  eventInvites  EventInvite[]
+  suggestions   EventTrack[]
+  votes         Vote[]
 
   @@index([displayName])
 }
@@ -149,4 +153,83 @@ model Track {
   previewUrl  String?
   durationSec Int
   updatedAt   DateTime @updatedAt
+
+  eventEntries EventTrack[]
+}
+
+enum Visibility {
+  PUBLIC
+  PRIVATE
+}
+
+enum VoteLicense {
+  EVERYONE
+  INVITED
+  LOCATION
+}
+
+model Event {
+  id               String      @id @default(uuid()) @db.Uuid
+  ownerId          String      @db.Uuid
+  name             String
+  visibility       Visibility  @default(PUBLIC)
+  voteLicense      VoteLicense @default(EVERYONE)
+  lat              Float?
+  lng              Float?
+  radiusM          Int?
+  voteStartsAt     DateTime?
+  voteEndsAt       DateTime?
+  currentEntryId   String?     @db.Uuid
+  currentStartedAt DateTime?
+  version          Int         @default(0)
+  createdAt        DateTime    @default(now())
+
+  owner   User          @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  invites EventInvite[]
+  entries EventTrack[]
+
+  @@index([ownerId])
+  @@index([visibility, createdAt])
+}
+
+model EventInvite {
+  eventId   String   @db.Uuid
+  userId    String   @db.Uuid
+  createdAt DateTime @default(now())
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([eventId, userId])
+  @@index([userId])
+}
+
+// A suggested track. Leaves the queue (playedAt set) when it starts playing.
+// The migration adds a partial unique index: one live entry per track and event.
+model EventTrack {
+  id            String    @id @default(uuid()) @db.Uuid
+  eventId       String    @db.Uuid
+  trackId       Int
+  suggestedById String    @db.Uuid
+  createdAt     DateTime  @default(now())
+  playedAt      DateTime?
+
+  event       Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  track       Track  @relation(fields: [trackId], references: [deezerId])
+  suggestedBy User   @relation(fields: [suggestedById], references: [id], onDelete: Cascade)
+  votes       Vote[]
+
+  @@index([eventId, playedAt])
+}
+
+// The primary key makes a double vote impossible.
+model Vote {
+  eventTrackId String   @db.Uuid
+  userId       String   @db.Uuid
+  createdAt    DateTime @default(now())
+
+  entry EventTrack @relation(fields: [eventTrackId], references: [id], onDelete: Cascade)
+  user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([eventTrackId, userId])
 }

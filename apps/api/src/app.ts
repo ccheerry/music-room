@@ -27,6 +27,10 @@ import { catalogRoutes } from './modules/catalog/routes.js';
 import { createDeezerClient } from './modules/catalog/deezer.js';
 import { createCatalogService } from './modules/catalog/service.js';
 import { createRealtime, type Realtime } from './modules/realtime/server.js';
+import { canView as canViewEvent } from './modules/events/access.js';
+import { createEventQueue } from './modules/events/queue.js';
+import { eventsRoutes } from './modules/events/routes.js';
+import { createEventsService } from './modules/events/service.js';
 
 declare module 'fastify' {
 	interface FastifyInstance {
@@ -42,6 +46,8 @@ export type AppDeps = {
 	// Replaced in tests: providers and Deezer are mocked at these boundaries.
 	socialVerifier?: SocialVerifier;
 	deezerFetch?: typeof fetch;
+	// Length of a played preview; shortened in tests.
+	previewMs?: number;
 };
 
 export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
@@ -93,6 +99,25 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
 	const deezer = createDeezerClient({ fetch: deps.deezerFetch });
 	const catalog = createCatalogService({ prisma, deezer });
 	await app.register(catalogRoutes(catalog), { prefix: API_PREFIX });
+
+	const queue = createEventQueue({ prisma, catalog, realtime, previewMs: deps.previewMs });
+	const events = createEventsService({
+		prisma,
+		hooks: {
+			onDeleted: (eventId) => {
+				queue.forget(eventId);
+				realtime.emitTo(`event:${eventId}`, 'event:deleted', { eventId });
+			},
+			onAccessLost: (eventId, userId) => realtime.kick(userId, `event:${eventId}`),
+		},
+	});
+	realtime.registerRoom('event', async (userId, id) => {
+		const event = await prisma.event.findUnique({ where: { id } });
+		return !!event && (await canViewEvent(prisma, event, userId));
+	});
+	await app.register(eventsRoutes(events, queue), { prefix: API_PREFIX });
+	app.addHook('onReady', () => queue.resume());
+	app.addHook('onClose', async () => queue.stop());
 	const verifier = deps.socialVerifier ?? createSocialVerifier(env);
 	const social = createSocialService({ prisma, verifier, auth });
 	await app.register(socialRoutes(social), { prefix: API_PREFIX });
