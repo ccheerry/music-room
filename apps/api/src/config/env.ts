@@ -8,6 +8,8 @@ const EnvSchema = z.object({
 		.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])
 		.default('info'),
 	DATABASE_URL: z.url(),
+	// Only read by the test runner; defaults to DATABASE_URL's database + "_test".
+	TEST_DATABASE_URL: z.url().optional(),
 	JWT_SECRET: z.string().min(32),
 	SMTP_HOST: z.string().default('localhost'),
 	SMTP_PORT: z.coerce.number().int().positive().default(1025),
