@@ -55,14 +55,14 @@ address can be changed from its settings.
 | **auth** | Email sign-up | argon2id hashes, verification mail with a single-use hashed token |
 | **auth** | Password reset | Always answers `204`, so an address can't be probed; reset revokes every session |
 | **auth** | Sessions | 15-minute access JWT + refresh token rotated on every use; replaying an old one revokes the family |
-| **auth** | Google / Facebook | The app gets a provider token, the back-end verifies it with the provider itself |
+| **social** | Google / Facebook | The app gets a provider token, the back-end verifies it with the provider itself; linking never merges accounts silently |
 | **users** | Profile tiers | Public, friends-only and private fields filtered by one `viewProfile` function |
 | **users** | Music preferences | Genres and artists, used for discovery |
 | **friends** | Requests | Send, accept, decline, remove; one row per pair |
 | **catalog** | Deezer proxy | Search and track lookup, validated, cached, throttled to the Deezer quota |
 | **events** | Track Vote | Suggest, vote, ranked queue computed `ORDER BY votes DESC, createdAt ASC` |
 | **events** | Licenses | Everyone, invited only, or inside a radius during a time window |
-| **events** | Playback clock | `currentStartedAt` on the server; next track advanced with an optimistic `version` check |
+| **events** | Playback clock | `currentStartedAt` on the server; a skip names the entry it saw playing, so two skips advance one track |
 | **playlists** | Live editor | Add / move / remove by entry id, fractional positions, row lock per playlist |
 | **playlists** | Conflicts | Operation on a vanished entry → `409` with the current state |
 | **devices** | Delegation | Per-device grants to friends, commands relayed over Socket.IO, revoked instantly |
@@ -86,7 +86,7 @@ address can be changed from its settings.
 cp .env.example .env          # fill in the OAuth client ids
 make install                  # npm ci for every workspace
 make up                       # postgres + mailpit + api in Docker
-make migrate seed             # schema + demo users, events and playlists
+make migrate seed             # schema + demo users, an event and a playlist
 make mobile                   # Expo dev server, scan the QR code
 ```
 
@@ -97,10 +97,11 @@ captured mails on `http://localhost:8025`.
 
 ```bash
 $ curl -s -X POST localhost:3000/api/v1/events/$EVENT/tracks/$ENTRY/vote \
-       -H "Authorization: Bearer $TOKEN" | jq '.queue[0:2]'
+       -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -d '{}' \
+  | jq '.queue[0:2] | map({ title: .track.title, votes })'
 [
-  { "entryId": "…", "title": "One More Time", "artist": "Daft Punk", "votes": 7 },
-  { "entryId": "…", "title": "Get Lucky",     "artist": "Daft Punk", "votes": 5 }
+  { "title": "One More Time", "votes": 7 },
+  { "title": "Get Lucky",     "votes": 5 }
 ]
 ```
 
@@ -191,9 +192,10 @@ refuses to start if a required one is missing.
 | `DATABASE_URL` | PostgreSQL connection |
 | `JWT_SECRET` | Access token signature |
 | `SMTP_HOST` / `SMTP_PORT` | Mailpit in development |
-| `GOOGLE_CLIENT_IDS` | Accepted audiences for Google id tokens |
-| `FACEBOOK_APP_ID` / `FACEBOOK_APP_SECRET` | Facebook token verification |
+| `GOOGLE_CLIENT_IDS` | Accepted audiences for Google id tokens (optional) |
+| `FACEBOOK_APP_ID` / `FACEBOOK_APP_SECRET` | Facebook token verification (optional) |
 | `EXPO_PUBLIC_API_URL` | Default back-end URL of the app |
+| `EXPO_PUBLIC_GOOGLE_*` / `EXPO_PUBLIC_FACEBOOK_APP_ID` | Provider ids used by the app (optional) |
 
 <br>
 
@@ -225,7 +227,9 @@ music-room/
 │   │   │   ├── server.ts                 # Listens
 │   │   │   ├── plugins/                  # auth, rate-limit, swagger, action-log, errors
 │   │   │   └── modules/
-│   │   │       ├── auth/                 # register, login, refresh, mails, social
+│   │   │       ├── auth/                 # register, login, refresh, mails
+│   │   │       ├── social/               # Google / Facebook sign-in and linking
+│   │   │       ├── me/                   # current user, password
 │   │   │       ├── users/                # profile tiers, search
 │   │   │       ├── friends/              # requests and friendships
 │   │   │       ├── catalog/              # Deezer proxy and cache
@@ -239,11 +243,12 @@ music-room/
 │       ├── app/                          # Expo Router screens
 │       ├── src/
 │       │   ├── api/                      # HTTP client, refresh, device headers
-│       │   ├── features/                 # auth, profile, events, playlists, devices
-│       │   ├── hooks/                    # useSocket, useRoom, …
-│       │   ├── stores/                   # session, settings, player
+│       │   ├── features/                 # social, profile, catalog, player, events, playlists, devices
+│       │   ├── realtime/                 # socket connection, useRoom, cache patching
+│       │   ├── hooks/                    # theme, debounce
+│       │   ├── stores/                   # session, settings
 │       │   └── components/               # Shared UI
-│       └── .maestro/                     # End-to-end flows
+│       └── test/                         # Component and unit tests
 │
 └── loadtest/
     ├── seed.ts                           # Users, tokens, events, playlists
