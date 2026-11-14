@@ -8,11 +8,16 @@ type LoadOptions = {
 	// Who drives the player (an event, a playlist, a remote controller…).
 	source?: string;
 	onEnd?: () => void;
+	// Provided by sources that have a list (a playlist played in order).
+	controls?: Controls;
 };
+
+export type Controls = { next?: () => void; prev?: () => void };
 
 type PlayerState = {
 	track: Track | null;
 	source: string | null;
+	controls: Controls;
 	playing: boolean;
 	positionMs: number;
 	durationMs: number;
@@ -46,6 +51,7 @@ function getAudio(set: (s: Partial<PlayerState>) => void): AudioPlayer {
 export const usePlayer = create<PlayerState>()((set, get) => ({
 	track: null,
 	source: null,
+	controls: {},
 	playing: false,
 	positionMs: 0,
 	durationMs: 0,
@@ -56,6 +62,7 @@ export const usePlayer = create<PlayerState>()((set, get) => ({
 		set({
 			track,
 			source: options.source ?? null,
+			controls: options.controls ?? {},
 			positionMs: options.startMs ?? 0,
 			playing: false,
 		});
@@ -78,6 +85,13 @@ export const usePlayer = create<PlayerState>()((set, get) => ({
 	stop: () => {
 		audio?.pause();
 		onEnd = undefined;
-		set({ track: null, source: null, playing: false, positionMs: 0, durationMs: 0 });
+		set({
+			track: null,
+			source: null,
+			controls: {},
+			playing: false,
+			positionMs: 0,
+			durationMs: 0,
+		});
 	},
 }));

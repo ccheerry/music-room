@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { type MeResponse, UpdateMeBody } from '@music-room/shared';
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { type ReactNode, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { StyleSheet, View } from 'react-native';
 
@@ -18,7 +18,7 @@ import { FIELD_LABELS, PROFILE_FIELDS, TIERS } from '@/features/profile/tiers';
 
 const MAX_PREFS = 20;
 
-export function ProfileForm({ me }: { me: MeResponse }) {
+export function ProfileForm({ me, header }: { me: MeResponse; header?: ReactNode }) {
 	const [status, setStatus] = useState<{ ok: boolean; text: string } | null>(null);
 	const [prefInput, setPrefInput] = useState('');
 	const { control, handleSubmit, formState, setValue } = useForm({
@@ -56,6 +56,7 @@ export function ProfileForm({ me }: { me: MeResponse }) {
 
 	return (
 		<Screen>
+			{header}
 			<TextField
 				control={control}
 				name="displayName"

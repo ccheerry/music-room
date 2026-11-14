@@ -21,7 +21,7 @@ describe('auth gate', () => {
 	it('opens on Home when a session is stored', async () => {
 		await useSession.getState().signIn({ accessToken: 'a', refreshToken: 'r', expiresIn: 900 });
 		const app = await renderRouter(APP, { initialUrl: '/log-in' });
-		expect(await screen.findByText('Hi, Ana')).toBeOnTheScreen();
+		expect(await screen.findByText('New event')).toBeOnTheScreen();
 		expect(app.getPathname()).toBe('/');
 	});
 });

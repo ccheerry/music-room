@@ -33,7 +33,7 @@ export default function EventScreen() {
 		stateEvent: 'event:state',
 		queryKey: eventKeys.state(id),
 		isFor: (s) => s.eventId === id,
-		on: { 'event:deleted': () => router.dismissTo('/events') },
+		on: { 'event:deleted': () => router.dismissTo('/') },
 	});
 	useEventPlayback(id, state.data, !!event.data?.isOwner);
 

@@ -30,7 +30,7 @@ export default function EditEventScreen() {
 				variant="secondary"
 				onPress={async () => {
 					await deleteEvent(id);
-					router.dismissTo('/events');
+					router.dismissTo('/');
 				}}
 			/>
 		</Screen>

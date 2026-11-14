@@ -9,5 +9,9 @@ export function playInOrder(tracks: Track[], index: number, source: string): voi
 	usePlayer.getState().load(tracks[at]!, {
 		source,
 		onEnd: () => playInOrder(tracks, at + 1, source),
+		controls: {
+			next: () => playInOrder(tracks, at + 1, source),
+			prev: () => playInOrder(tracks, Math.max(0, at - 1), source),
+		},
 	});
 }

@@ -34,6 +34,10 @@ export default function RootLayout() {
 					<Stack.Protected guard={signedIn} redirectTo="/welcome">
 						<Stack.Screen name="(tabs)" options={{ headerShown: false }} />
 						<Stack.Screen name="user/[id]" options={{ title: 'Profile' }} />
+						<Stack.Screen name="friends" options={{ title: 'Friends' }} />
+						<Stack.Screen name="devices" options={{ title: 'My devices' }} />
+						<Stack.Screen name="device/[id]" options={{ title: 'Device' }} />
+						<Stack.Screen name="remote/[id]" options={{ title: 'Remote' }} />
 						<Stack.Screen name="event/new" options={{ title: 'New event' }} />
 						<Stack.Screen name="event/[id]/index" options={{ title: 'Event' }} />
 						<Stack.Screen name="event/[id]/edit" options={{ title: 'Edit event' }} />
