@@ -33,6 +33,7 @@ model User {
   playlists     Playlist[]
   memberships   PlaylistMember[]
   playlistAdds  PlaylistEntry[]
+  controlGrants ControlGrant[]
 
   @@index([displayName])
 }
@@ -104,6 +105,7 @@ model Device {
   user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   refreshTokens RefreshToken[]
   actionLogs    ActionLog[]
+  grants        ControlGrant[]
 
   // No stable hardware id from the app: one row per user + platform + model.
   @@unique([userId, platform, model])
@@ -286,4 +288,18 @@ model PlaylistEntry {
   addedBy  User     @relation(fields: [addedById], references: [id], onDelete: Cascade)
 
   @@unique([playlistId, position])
+}
+
+// Lets a friend control one device of the owner, optionally until expiresAt.
+model ControlGrant {
+  deviceId  String    @db.Uuid
+  granteeId String    @db.Uuid
+  expiresAt DateTime?
+  createdAt DateTime  @default(now())
+
+  device  Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  grantee User   @relation(fields: [granteeId], references: [id], onDelete: Cascade)
+
+  @@id([deviceId, granteeId])
+  @@index([granteeId])
 }

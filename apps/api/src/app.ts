@@ -35,6 +35,8 @@ import { canView as canViewPlaylist } from './modules/playlists/access.js';
 import { createPlaylistEditor } from './modules/playlists/editor.js';
 import { playlistsRoutes } from './modules/playlists/routes.js';
 import { createPlaylistsService } from './modules/playlists/service.js';
+import { devicesRoutes } from './modules/devices/routes.js';
+import { createDevicesService } from './modules/devices/service.js';
 
 declare module 'fastify' {
 	interface FastifyInstance {
@@ -95,7 +97,9 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
 	});
 	await app.register(healthRoutes(prisma), { prefix: API_PREFIX });
 	await app.register(authRoutes(auth), { prefix: API_PREFIX });
-	const friends = createFriendsService({ prisma });
+	// Ending a friendship revokes device control both ways.
+	let onUnfriend: (a: string, b: string) => Promise<void> = async () => undefined;
+	const friends = createFriendsService({ prisma, onUnfriend: (a, b) => onUnfriend(a, b) });
 	const users = createUsersService({ prisma, friends });
 	await app.register(meRoutes(auth, users), { prefix: API_PREFIX });
 	await app.register(usersRoutes(users), { prefix: API_PREFIX });
@@ -146,6 +150,13 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
 		return !!playlist && (await canViewPlaylist(prisma, playlist, userId));
 	});
 	await app.register(playlistsRoutes(playlists, editor), { prefix: API_PREFIX });
+
+	const devices = createDevicesService({ prisma, friends, realtime });
+	onUnfriend = devices.revokeBetween;
+	realtime.registerRoom('remote', devices.canControl);
+	realtime.on('device:command', devices.onCommand);
+	realtime.on('device:status', devices.onStatus);
+	await app.register(devicesRoutes(devices), { prefix: API_PREFIX });
 	app.addHook('onClose', async () => queue.stop());
 	const verifier = deps.socialVerifier ?? createSocialVerifier(env);
 	const social = createSocialService({ prisma, verifier, auth });
