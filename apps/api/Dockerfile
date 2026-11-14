@@ -21,7 +21,11 @@ COPY --from=build /repo/packages/shared/package.json packages/shared/
 COPY --from=build /repo/packages/shared/dist packages/shared/dist
 COPY --from=build /repo/apps/api/package.json apps/api/
 COPY --from=build /repo/apps/api/dist apps/api/dist
+COPY --from=build /repo/apps/api/node_modules apps/api/node_modules
+COPY apps/api/prisma.config.ts apps/api/
+COPY apps/api/prisma apps/api/prisma
 WORKDIR /repo/apps/api
 USER node
 EXPOSE 3000
-CMD ["node", "dist/server.js"]
+# Pending migrations are applied before the server starts, so a fresh database just works.
+CMD ["sh", "-c", "npx --no-install prisma migrate deploy && exec node dist/server.js"]
