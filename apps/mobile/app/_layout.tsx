@@ -34,6 +34,14 @@ export default function RootLayout() {
 					<Stack.Protected guard={signedIn} redirectTo="/welcome">
 						<Stack.Screen name="(tabs)" options={{ headerShown: false }} />
 						<Stack.Screen name="user/[id]" options={{ title: 'Profile' }} />
+						<Stack.Screen name="event/new" options={{ title: 'New event' }} />
+						<Stack.Screen name="event/[id]/index" options={{ title: 'Event' }} />
+						<Stack.Screen name="event/[id]/edit" options={{ title: 'Edit event' }} />
+						<Stack.Screen
+							name="event/[id]/suggest"
+							options={{ title: 'Suggest a track' }}
+						/>
+						<Stack.Screen name="event/[id]/invite" options={{ title: 'Invite' }} />
 						<Stack.Screen
 							name="change-password"
 							options={{ title: 'Change password' }}

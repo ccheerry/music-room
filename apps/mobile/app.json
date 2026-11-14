@@ -34,7 +34,13 @@
 				}
 			],
 			"expo-secure-store",
-			"expo-audio"
+			"expo-audio",
+			[
+				"expo-location",
+				{
+					"locationWhenInUsePermission": "Music Room uses your location to check that you are at the event when you vote."
+				}
+			]
 		],
 		"experiments": {
 			"typedRoutes": true,

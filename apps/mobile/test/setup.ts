@@ -41,3 +41,9 @@ jest.mock('socket.io-client', () => ({
 		};
 	}),
 }));
+
+// Reanimated needs the native worklets runtime: only what the app uses is faked.
+jest.mock('react-native-reanimated', () => {
+	const { View } = jest.requireActual('react-native');
+	return { __esModule: true, default: { View }, LinearTransition: {} };
+});
