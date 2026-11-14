@@ -5,6 +5,8 @@ export class ApiError extends Error {
 		readonly status: number,
 		readonly code: string,
 		message: string,
+		// Full error body, for answers that carry more than the message (409 STALE + state).
+		readonly body?: unknown,
 	) {
 		super(message);
 	}
@@ -14,9 +16,10 @@ export class ApiError extends Error {
 export class UserError extends Error {}
 
 export async function toApiError(res: Response): Promise<ApiError> {
-	const body = ErrorBody.safeParse(await res.json().catch(() => null));
+	const raw: unknown = await res.json().catch(() => null);
+	const body = ErrorBody.safeParse(raw);
 	return body.success
-		? new ApiError(res.status, body.data.error.code, body.data.error.message)
+		? new ApiError(res.status, body.data.error.code, body.data.error.message, raw)
 		: new ApiError(res.status, 'UNKNOWN', `Request failed (${res.status})`);
 }
 
@@ -36,6 +39,7 @@ const MESSAGES: Record<string, string> = {
 	OUTSIDE_WINDOW: 'Voting is closed right now',
 	NO_PREVIEW: 'This track has no preview, pick another one',
 	STALE: 'Things changed meanwhile, the list is up to date now',
+	CANNOT_EDIT: 'Only invited members can edit this playlist',
 	CATALOG_BUSY: 'The music catalog is busy, try again in a few seconds',
 };
 

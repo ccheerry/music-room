@@ -42,6 +42,10 @@ export default function RootLayout() {
 							options={{ title: 'Suggest a track' }}
 						/>
 						<Stack.Screen name="event/[id]/invite" options={{ title: 'Invite' }} />
+						<Stack.Screen name="playlist/new" options={{ title: 'New playlist' }} />
+						<Stack.Screen name="playlist/[id]/index" options={{ title: 'Playlist' }} />
+						<Stack.Screen name="playlist/[id]/add" options={{ title: 'Add a track' }} />
+						<Stack.Screen name="playlist/[id]/members" options={{ title: 'Members' }} />
 						<Stack.Screen
 							name="change-password"
 							options={{ title: 'Change password' }}
