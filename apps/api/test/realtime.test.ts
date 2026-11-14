@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import {
 	buildTestApp,
@@ -124,11 +124,13 @@ describe('action log', () => {
 	it('stores socket actions with the client info', async () => {
 		const s = await open(other);
 		await emitAck(s, 'room:join', { kind: 'event', id: randomUUID() });
-		await new Promise((r) => setTimeout(r, 100));
-		const row = await t.prisma.actionLog.findFirst({
-			where: { userId: other.id, action: 'SOCKET room:join' },
-			orderBy: { createdAt: 'desc' },
+		// Rows are stored in batches, a moment after the action.
+		await vi.waitFor(async () => {
+			const row = await t.prisma.actionLog.findFirst({
+				where: { userId: other.id, action: 'SOCKET room:join' },
+				orderBy: { createdAt: 'desc' },
+			});
+			expect(row).toMatchObject({ status: 403, platform: 'ios', device: 'iPhone 15' });
 		});
-		expect(row).toMatchObject({ status: 403, platform: 'ios', device: 'iPhone 15' });
 	});
 });

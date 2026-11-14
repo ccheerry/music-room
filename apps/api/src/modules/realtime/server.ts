@@ -12,7 +12,7 @@ import {
 	SocketErrorCode,
 	roomName,
 } from '@music-room/shared';
-import type { PrismaClient } from '../../db.js';
+import type { ActionLogWriter } from '../../plugins/action-log.js';
 import type { AccessClaims } from '../../plugins/auth.js';
 
 export type SocketData = {
@@ -41,13 +41,13 @@ type RealtimeDeps = {
 	server: HttpServer;
 	corsOrigins: string[];
 	verify: (token: string) => AccessClaims;
-	prisma: PrismaClient;
+	actionLog: ActionLogWriter;
 	log: FastifyBaseLogger;
 };
 
 const fail = (code: string, message: string): Ack => ({ ok: false, error: { code, message } });
 
-export function createRealtime({ server, corsOrigins, verify, prisma, log }: RealtimeDeps) {
+export function createRealtime({ server, corsOrigins, verify, actionLog, log }: RealtimeDeps) {
 	const io: AppServer = new Server(server, {
 		cors: { origin: corsOrigins },
 		// Socket payloads are small JSON messages.
@@ -60,9 +60,7 @@ export function createRealtime({ server, corsOrigins, verify, prisma, log }: Rea
 		const { userId, deviceId, client } = socket.data;
 		const entry = { userId, deviceId, ...client, action: `SOCKET ${action}`, status };
 		log.info(entry, 'action');
-		prisma.actionLog
-			.create({ data: entry })
-			.catch((err: unknown) => log.error({ err }, 'action log write failed'));
+		actionLog.write(entry);
 	};
 
 	io.use((socket, next) => {
