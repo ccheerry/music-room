@@ -117,6 +117,32 @@ describe('suggestions and ranking', () => {
 		expect(res.json().queue[0].votes).toBe(0);
 	});
 
+	it('refuses a new track once the queue is full, but still takes votes', async () => {
+		const { id } = await eventWithQueue(0);
+		const trackIds = Array.from({ length: 200 }, (_, i) => 8_000_000 + i);
+		await t.prisma.track.createMany({
+			data: trackIds.map((deezerId) => ({
+				deezerId,
+				title: 'T',
+				artist: 'A',
+				album: 'B',
+				previewUrl: 'https://cdn.deezer.test/p.mp3',
+				durationSec: 30,
+			})),
+			skipDuplicates: true,
+		});
+		await t.prisma.eventTrack.createMany({
+			data: trackIds.map((trackId) => ({ eventId: id, trackId, suggestedById: owner.id })),
+		});
+		const full = await call(t, 'POST', `/events/${id}/tracks`, owner, { deezerId: 4444 });
+		expect(full.statusCode).toBe(422);
+		expect(full.json().error.code).toBe('LIST_FULL');
+		const queued = await call(t, 'POST', `/events/${id}/tracks`, owner, {
+			deezerId: trackIds[0],
+		});
+		expect(queued.statusCode).toBe(200);
+	});
+
 	it('refuses a track without preview', async () => {
 		const id = await newEvent();
 		await t.prisma.track.upsert({

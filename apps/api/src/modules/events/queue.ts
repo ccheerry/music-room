@@ -6,6 +6,7 @@ import {
 	PREVIEW_SEC,
 } from '@music-room/shared';
 import type { PrismaClient } from '../../db.js';
+import { listFull, QUEUE_CAP } from '../../lib/limits.js';
 import { httpError } from '../../plugins/errors.js';
 import { isUniqueViolation } from '../auth/service.js';
 import type { CatalogService } from '../catalog/service.js';
@@ -14,6 +15,7 @@ import type { Realtime } from '../realtime/server.js';
 import { loadOwned, loadVisible, voteRefusal } from './access.js';
 
 const BROADCAST_EVERY_MS = 200;
+const RETRY_MS = 1000;
 const summary = { select: { id: true, displayName: true } } as const;
 
 type QueueDeps = {
@@ -108,6 +110,9 @@ export function createEventQueue({
 	const bump = (eventId: string) =>
 		prisma.event.update({ where: { id: eventId }, data: { version: { increment: 1 } } });
 
+	// "Started" time that makes the timer fire again in RETRY_MS.
+	const retryAt = () => new Date(Date.now() + RETRY_MS - previewMs);
+
 	function schedule(eventId: string, entryId: string, startedAt: Date): void {
 		clearTimeout(timers.get(eventId));
 		const delay = Math.max(0, startedAt.getTime() + previewMs - Date.now());
@@ -115,7 +120,8 @@ export function createEventQueue({
 			eventId,
 			setTimeout(() => {
 				timers.delete(eventId);
-				advance(eventId, entryId).catch(() => undefined);
+				// A failed advance (database busy) is tried again: the event must not stall.
+				advance(eventId, entryId).catch(() => schedule(eventId, entryId, retryAt()));
 			}, delay),
 		);
 	}
@@ -124,20 +130,22 @@ export function createEventQueue({
 	async function advance(eventId: string, expected: string | null): Promise<boolean> {
 		const now = new Date();
 		const next = await prisma.$transaction(async (tx) => {
+			// Claimed first: the row lock makes a concurrent advance wait, so the queue read
+			// below cannot miss a track suggested meanwhile.
+			const { count } = await tx.event.updateMany({
+				where: { id: eventId, currentEntryId: expected },
+				data: { version: { increment: 1 } },
+			});
+			if (count === 0) return undefined;
 			const top = await tx.eventTrack.findFirst({
 				where: { eventId, playedAt: null },
 				orderBy: [{ votes: { _count: 'desc' } }, { createdAt: 'asc' }, { id: 'asc' }],
 				select: { id: true, trackId: true },
 			});
-			const { count } = await tx.event.updateMany({
-				where: { id: eventId, currentEntryId: expected },
-				data: {
-					currentEntryId: top?.id ?? null,
-					currentStartedAt: top ? now : null,
-					version: { increment: 1 },
-				},
+			await tx.event.update({
+				where: { id: eventId },
+				data: { currentEntryId: top?.id ?? null, currentStartedAt: top ? now : null },
 			});
-			if (count === 0) return undefined;
 			if (top) await tx.eventTrack.update({ where: { id: top.id }, data: { playedAt: now } });
 			return top ?? null;
 		});
@@ -172,6 +180,14 @@ export function createEventQueue({
 		const track = await catalog.getTrack(deezerId);
 		if (!track.previewUrl) {
 			throw httpError(422, EventErrorCode.NoPreview, 'This track has no preview to play');
+		}
+		// A track already waiting only gets a vote, so it is never refused here.
+		const waiting = await prisma.eventTrack.findMany({
+			where: { eventId, playedAt: null },
+			select: { trackId: true },
+		});
+		if (waiting.length >= QUEUE_CAP && !waiting.some((e) => e.trackId === track.id)) {
+			throw listFull('The queue', QUEUE_CAP);
 		}
 		let entry = null;
 		for (let attempt = 0; !entry && attempt < 3; attempt++) {
@@ -249,6 +265,7 @@ export function createEventQueue({
 		clearTimeout(pending.get(eventId));
 		timers.delete(eventId);
 		pending.delete(eventId);
+		lastSent.delete(eventId);
 	}
 
 	function stop(): void {
