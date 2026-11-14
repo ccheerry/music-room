@@ -71,7 +71,10 @@ export const usePlayer = create<PlayerState>()((set, get) => ({
 			positionMs: options.startMs ?? 0,
 			playing: false,
 		});
-		if (!track.previewUrl) return;
+		if (!track.previewUrl) {
+			player.pause();
+			return;
+		}
 		player.replace({ uri: track.previewUrl });
 		player.volume = get().volume;
 		if (options.startMs) void player.seekTo(options.startMs / 1000);

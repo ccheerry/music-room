@@ -6,7 +6,7 @@ const VOLUME_STEP = 0.1;
 export { VOLUME_STEP };
 
 // Applies a remote command to the local player. next / prev name the track the
-// controller saw: one meant for another track is stale and ignored (PLAN §6).
+// controller saw: one meant for another track is stale and ignored.
 export function handleCommand(cmd: RelayedCommand): boolean {
 	const player = usePlayer.getState();
 	const playingId = player.track?.id ?? null;

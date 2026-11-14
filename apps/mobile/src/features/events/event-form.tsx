@@ -29,6 +29,10 @@ type EventFormProps = {
 	onSubmit: (values: EventFormValues) => Promise<void>;
 };
 
+// Length of the voting window, in hours.
+const hoursOf = (zone: VoteZone) =>
+	Math.round(((Date.parse(zone.endsAt) - Date.parse(zone.startsAt)) / 3600000) * 100) / 100;
+
 // shortcut: the zone is placed at the phone's position (no map picker); add react-native-maps for remote placement.
 export function EventForm({ initial, submitLabel, onSubmit }: EventFormProps) {
 	const [name, setName] = useState(initial?.name ?? '');
@@ -38,7 +42,7 @@ export function EventForm({ initial, submitLabel, onSubmit }: EventFormProps) {
 		initial?.zone ? { lat: initial.zone.lat, lng: initial.zone.lng } : null,
 	);
 	const [radius, setRadius] = useState(String(initial?.zone?.radiusM ?? 200));
-	const [hours, setHours] = useState('4');
+	const [hours, setHours] = useState(initial?.zone ? String(hoursOf(initial.zone)) : '4');
 	const [error, setError] = useState<string | null>(null);
 	const [busy, setBusy] = useState(false);
 

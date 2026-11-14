@@ -12,6 +12,7 @@ export type SocketStatus = 'offline' | 'connecting' | 'online';
 export const useSocketStatus = create<{ status: SocketStatus }>()(() => ({ status: 'offline' }));
 const setStatus = (status: SocketStatus) => useSocketStatus.setState({ status });
 
+const RETRY_MS = 5000;
 let socket: AppSocket | null = null;
 
 function connect(apiUrl: string): AppSocket {
@@ -43,9 +44,11 @@ function connect(apiUrl: string): AppSocket {
 		setStatus('connecting');
 		// The access token expired: refresh it, then try again.
 		if (err.message === 'UNAUTHORIZED' && useSession.getState().status === 'signedIn') {
+			// A refresh that failed for now (network, busy server) is tried again later;
+			// a refused one signs the user out, which removes this socket.
 			refreshOnce()
 				.then(() => s.connect())
-				.catch(() => undefined);
+				.catch(() => setTimeout(() => socket === s && s.connect(), RETRY_MS));
 		}
 	});
 	return s;
