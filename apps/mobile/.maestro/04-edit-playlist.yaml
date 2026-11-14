@@ -1,0 +1,39 @@
+# Alice creates a playlist, adds two tracks, moves one and removes one.
+# Needs `make seed` and access to Deezer.
+appId: ${APP_ID}
+---
+- runFlow:
+    file: common/log-in.yaml
+    env:
+      EMAIL: 'alice@musicroom.local'
+      PASSWORD: 'musicroom1'
+- tapOn: 'Playlists'
+- tapOn: 'New playlist'
+- tapOn: 'Playlist name'
+- inputText: 'Maestro list'
+- hideKeyboard
+- tapOn: 'Create playlist'
+- assertVisible: 'No tracks yet'
+- tapOn: 'Add a track'
+- tapOn: 'Search tracks'
+- inputText: 'daft punk'
+- hideKeyboard
+- tapOn:
+    text: 'Add'
+    index: 0
+- assertVisible: 'Play in order'
+- tapOn: 'Add a track'
+- tapOn: 'Search tracks'
+- inputText: 'queen'
+- hideKeyboard
+- tapOn:
+    text: 'Add'
+    index: 0
+- assertVisible: 'Down'
+- tapOn: 'Down'
+- assertVisible: 'Up'
+- tapOn:
+    text: 'Remove'
+    index: 0
+- assertNotVisible: 'Down'
+- assertVisible: 'Remove'

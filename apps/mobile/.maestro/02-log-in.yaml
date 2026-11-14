@@ -1,0 +1,14 @@
+# Log in with a seeded account, check the profile, log out. Needs `make seed`.
+appId: ${APP_ID}
+---
+- runFlow:
+    file: common/log-in.yaml
+    env:
+      EMAIL: 'alice@musicroom.local'
+      PASSWORD: 'musicroom1'
+- tapOn: 'Profile'
+- assertVisible: 'My devices'
+- scrollUntilVisible:
+    element: 'Log out'
+- tapOn: 'Log out'
+- assertVisible: 'Create an account'

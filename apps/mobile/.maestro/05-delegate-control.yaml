@@ -1,0 +1,33 @@
+# Alice lets a friend control this phone, sees the grant, uses the remote on her own
+# device and takes the grant back. Needs `make seed`.
+appId: ${APP_ID}
+---
+- runFlow:
+    file: common/log-in.yaml
+    env:
+      EMAIL: 'alice@musicroom.local'
+      PASSWORD: 'musicroom1'
+- tapOn: 'Profile'
+- tapOn: 'My devices'
+- tapOn: '.*\(this device\).*'
+- assertVisible: 'Friends who can control it'
+- tapOn:
+    text: 'Allow'
+    index: 0
+- assertVisible: 'no time limit'
+- back
+- back
+- tapOn: 'Control'
+- tapOn: '.*Alice · online.*'
+- assertVisible: 'Volume +'
+# The phone obeys the command and reports back: the remote shows the new volume.
+- tapOn: 'Volume -'
+- assertVisible: '90%'
+- tapOn: 'Volume +'
+- assertVisible: '100%'
+- back
+- tapOn: 'Profile'
+- tapOn: 'My devices'
+- tapOn: '.*\(this device\).*'
+- tapOn: 'Revoke'
+- assertNotVisible: 'no time limit'

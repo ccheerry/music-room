@@ -1,0 +1,36 @@
+# Sign up with email and password, confirm the address with the link from the mail, log in.
+# Needs the API, Mailpit and APP_LINK_URL matching LINK_BASE.
+appId: ${APP_ID}
+env:
+  LINK_BASE: ${LINK_BASE || 'musicroom://'}
+  MAILPIT_URL: ${MAILPIT_URL || 'http://localhost:8025'}
+---
+- runScript: common/new-email.js
+- launchApp:
+    clearState: true
+- tapOn: 'Create an account'
+- tapOn: 'Email'
+- inputText: ${output.email}
+- tapOn: 'Name'
+- inputText: 'Maestro'
+- tapOn: 'Password'
+- inputText: 'musicroom1'
+- hideKeyboard
+- tapOn: 'Create account'
+- assertVisible: 'Back to log in'
+- runScript:
+    file: common/mail-token.js
+    env:
+      EMAIL: ${output.email}
+- openLink: ${LINK_BASE + 'verify?token=' + output.token}
+- assertVisible: 'Your email is confirmed.'
+- tapOn: 'Log in'
+- tapOn: 'Email'
+- inputText: ${output.email}
+- tapOn: 'Password'
+- inputText: 'musicroom1'
+- hideKeyboard
+- tapOn:
+    text: 'Log in'
+    above: 'Forgot your password?'
+- assertVisible: 'New event'

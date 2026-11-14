@@ -1,0 +1,39 @@
+# Bob, invited to Alice's "Friday party", suggests two tracks and changes his vote.
+# Needs `make seed` and access to Deezer.
+appId: ${APP_ID}
+---
+- runFlow:
+    file: common/log-in.yaml
+    env:
+      EMAIL: 'bob@musicroom.local'
+      PASSWORD: 'musicroom1'
+- tapOn: 'Friday party'
+- assertVisible: 'Suggest a track'
+# The first suggestion of an idle event starts playing, the second one waits in the queue.
+- tapOn: 'Suggest a track'
+- tapOn: 'Search tracks'
+- inputText: 'daft punk'
+- hideKeyboard
+- tapOn:
+    text: 'Suggest'
+    index: 0
+- assertVisible: 'Up next'
+- tapOn: 'Suggest a track'
+- tapOn: 'Search tracks'
+- inputText: 'queen'
+- hideKeyboard
+- tapOn:
+    text: 'Suggest'
+    index: 1
+- assertVisible: 'Up next'
+# A suggestion counts as a vote: take it back, then vote again.
+- scrollUntilVisible:
+    element: 'Voted'
+- tapOn:
+    text: 'Voted'
+    index: 0
+- assertVisible: 'Vote'
+- tapOn:
+    text: 'Vote'
+    index: 0
+- assertVisible: 'Voted'

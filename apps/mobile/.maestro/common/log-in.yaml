@@ -1,0 +1,15 @@
+# Subflow: from a fresh app, log in as EMAIL / PASSWORD and land on the Events tab.
+appId: ${APP_ID}
+---
+- launchApp:
+    clearState: true
+- tapOn: 'Log in'
+- tapOn: 'Email'
+- inputText: ${EMAIL}
+- tapOn: 'Password'
+- inputText: ${PASSWORD}
+- hideKeyboard
+- tapOn:
+    text: 'Log in'
+    above: 'Forgot your password?'
+- assertVisible: 'New event'
