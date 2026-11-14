@@ -37,6 +37,7 @@ export type Realtime = {
 
 type RealtimeDeps = {
 	server: HttpServer;
+	corsOrigins: string[];
 	verify: (token: string) => AccessClaims;
 	prisma: PrismaClient;
 	log: FastifyBaseLogger;
@@ -44,8 +45,8 @@ type RealtimeDeps = {
 
 const fail = (code: string, message: string): Ack => ({ ok: false, error: { code, message } });
 
-export function createRealtime({ server, verify, prisma, log }: RealtimeDeps) {
-	const io: AppServer = new Server(server, { cors: { origin: true } });
+export function createRealtime({ server, corsOrigins, verify, prisma, log }: RealtimeDeps) {
+	const io: AppServer = new Server(server, { cors: { origin: corsOrigins } });
 	const rooms = new Map<RoomKind, Authorize>();
 	const handlers = new Map<string, SocketHandler>();
 

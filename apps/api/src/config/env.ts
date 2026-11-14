@@ -17,6 +17,16 @@ const EnvSchema = z.object({
 		.string()
 		.regex(/^[a-z][a-z0-9+.-]*:\/\/(.*\/)?$/i, 'scheme:// URL ending with /')
 		.default('musicroom://'),
+	// Browser origins allowed to call the API (Expo Web). Native apps send no Origin.
+	CORS_ORIGINS: z
+		.string()
+		.default('http://localhost:8081')
+		.transform((v) =>
+			v
+				.split(',')
+				.map((o) => o.trim())
+				.filter(Boolean),
+		),
 	// Social login is off until these are set. Google: every OAuth client id, comma-separated.
 	GOOGLE_CLIENT_IDS: z
 		.string()

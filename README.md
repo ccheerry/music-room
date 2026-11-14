@@ -191,6 +191,7 @@ refuses to start if a required one is missing.
 |----------|---------|
 | `DATABASE_URL` | PostgreSQL connection |
 | `JWT_SECRET` | Access token signature |
+| `CORS_ORIGINS` | Browser origins allowed to call the API |
 | `SMTP_HOST` / `SMTP_PORT` | Mailpit in development |
 | `GOOGLE_CLIENT_IDS` | Accepted audiences for Google id tokens (optional) |
 | `FACEBOOK_APP_ID` / `FACEBOOK_APP_SECRET` | Facebook token verification (optional) |

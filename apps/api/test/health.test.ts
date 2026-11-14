@@ -52,3 +52,26 @@ describe('loadEnv', () => {
 		);
 	});
 });
+
+describe('CORS', () => {
+	let t: TestApp;
+
+	beforeAll(async () => {
+		t = await buildTestApp();
+	});
+
+	afterAll(() => closeTestApp(t));
+
+	it('answers the preflight of an allowed origin only', async () => {
+		const preflight = (origin: string) =>
+			t.app.inject({
+				method: 'OPTIONS',
+				url: '/api/v1/auth/login',
+				headers: { origin, 'access-control-request-method': 'POST' },
+			});
+		const allowed = await preflight('http://localhost:8081');
+		expect(allowed.headers['access-control-allow-origin']).toBe('http://localhost:8081');
+		const other = await preflight('https://evil.example');
+		expect(other.headers['access-control-allow-origin']).toBeUndefined();
+	});
+});

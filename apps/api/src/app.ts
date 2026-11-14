@@ -1,4 +1,5 @@
 import Fastify, { type FastifyInstance } from 'fastify';
+import cors from '@fastify/cors';
 import rateLimit from '@fastify/rate-limit';
 import {
 	serializerCompiler,
@@ -62,6 +63,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
 	app.setValidatorCompiler(validatorCompiler);
 	app.setSerializerCompiler(serializerCompiler);
 	registerErrorHandlers(app);
+	await app.register(cors, { origin: env.CORS_ORIGINS });
 	await registerSwagger(app);
 	await registerAuth(app, env);
 	registerActionLog(app, prisma);
@@ -76,6 +78,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
 
 	const { io, realtime } = createRealtime({
 		server: app.server,
+		corsOrigins: env.CORS_ORIGINS,
 		verify: (token) => app.jwt.verify(token),
 		prisma,
 		log: app.log,
