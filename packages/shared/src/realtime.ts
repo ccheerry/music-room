@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { EventState } from './events.js';
+import type { PlaylistState } from './playlists.js';
 
 // Rooms a client may ask to join; each kind is authorised by its owning module.
 // "remote" is the controllers' room of a device (the device itself sits in device:<id>).
@@ -40,6 +41,8 @@ export interface ServerToClientEvents {
 	'room:presence': (presence: RoomPresence) => void;
 	'event:state': (state: EventState) => void;
 	'event:deleted': (payload: { eventId: string }) => void;
+	'playlist:state': (state: PlaylistState) => void;
+	'playlist:deleted': (payload: { playlistId: string }) => void;
 }
 
 export interface ClientToServerEvents {
