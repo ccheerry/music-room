@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { EventState } from './events.js';
 
 // Rooms a client may ask to join; each kind is authorised by its owning module.
 // "remote" is the controllers' room of a device (the device itself sits in device:<id>).
@@ -37,6 +38,8 @@ export const SOCKET_EVENTS_PER_SEC = 20;
 export interface ServerToClientEvents {
 	error: (error: SocketError) => void;
 	'room:presence': (presence: RoomPresence) => void;
+	'event:state': (state: EventState) => void;
+	'event:deleted': (payload: { eventId: string }) => void;
 }
 
 export interface ClientToServerEvents {
