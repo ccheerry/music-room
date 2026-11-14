@@ -32,6 +32,8 @@ export type Realtime = {
 	registerRoom: (kind: RoomKind, authorize: Authorize) => void;
 	on: (event: string, handler: SocketHandler) => void;
 	kick: (userId: string, room: string) => Promise<void>;
+	// Asks the room's module again about everyone in it; those refused leave.
+	recheck: (room: string) => Promise<void>;
 	roomSize: (room: string) => number;
 };
 
@@ -46,7 +48,11 @@ type RealtimeDeps = {
 const fail = (code: string, message: string): Ack => ({ ok: false, error: { code, message } });
 
 export function createRealtime({ server, corsOrigins, verify, prisma, log }: RealtimeDeps) {
-	const io: AppServer = new Server(server, { cors: { origin: corsOrigins } });
+	const io: AppServer = new Server(server, {
+		cors: { origin: corsOrigins },
+		// Socket payloads are small JSON messages.
+		maxHttpBufferSize: 100 * 1024,
+	});
 	const rooms = new Map<RoomKind, Authorize>();
 	const handlers = new Map<string, SocketHandler>();
 
@@ -189,6 +195,19 @@ export function createRealtime({ server, corsOrigins, verify, prisma, log }: Rea
 			const [kind, id] = room.split(':');
 			if (RoomRef.safeParse({ kind, id }).success)
 				presence({ kind: kind as RoomKind, id: id! });
+		},
+		recheck: async (room) => {
+			const [kind, id] = room.split(':');
+			const ref = RoomRef.safeParse({ kind, id });
+			const authorize = ref.success && rooms.get(ref.data.kind);
+			if (!ref.success || !authorize) return;
+			const allowed = new Map<string, boolean>();
+			for (const socket of await io.in(room).fetchSockets()) {
+				const { userId } = socket.data;
+				if (!allowed.has(userId)) allowed.set(userId, await authorize(userId, ref.data.id));
+				if (!allowed.get(userId)) socket.leave(room);
+			}
+			presence(ref.data);
 		},
 		roomSize,
 	};

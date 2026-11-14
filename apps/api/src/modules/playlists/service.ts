@@ -8,6 +8,7 @@ import {
 	type UserSummary,
 } from '@music-room/shared';
 import type { PrismaClient } from '../../db.js';
+import { LIST_CAP } from '../../lib/limits.js';
 import type { Playlist, Prisma } from '../../generated/prisma/client.js';
 import { httpError } from '../../plugins/errors.js';
 import { isUniqueViolation } from '../auth/service.js';
@@ -19,6 +20,8 @@ export type PlaylistHooks = {
 	onChanged: (playlistId: string) => void;
 	onDeleted: (playlistId: string) => void;
 	onAccessLost: (playlistId: string, userId: string) => Promise<void>;
+	// After a public playlist became private: some of its viewers may no longer see it.
+	onRestricted: (playlistId: string) => Promise<void>;
 };
 
 export function createPlaylistsService({
@@ -91,11 +94,14 @@ export function createPlaylistsService({
 		id: string,
 		body: UpdatePlaylistBody,
 	): Promise<PlaylistDetail> {
-		await loadOwned(prisma, id, userId);
+		const before = await loadOwned(prisma, id, userId);
 		await prisma.playlist.update({
 			where: { id },
 			data: { ...body, version: { increment: 1 } },
 		});
+		if (before.visibility === 'PUBLIC' && body.visibility === 'PRIVATE') {
+			await hooks.onRestricted(id);
+		}
 		hooks.onChanged(id);
 		return detail(userId, id);
 	}
@@ -111,6 +117,7 @@ export function createPlaylistsService({
 		const rows = await prisma.playlistMember.findMany({
 			where: { playlistId: id },
 			include: { user: owner },
+			take: LIST_CAP,
 			orderBy: { createdAt: 'asc' },
 		});
 		return rows.map((r) => r.user);

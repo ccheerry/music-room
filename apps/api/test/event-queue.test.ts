@@ -12,6 +12,7 @@ import {
 	type TestApp,
 	type TestUser,
 } from './helpers.js';
+import { fakeDeezerFetch } from './fixtures/deezer.js';
 
 const PREVIEW_MS = 400;
 let t: TestApp;
@@ -19,9 +20,19 @@ let owner: TestUser;
 let url: string;
 const sockets: ClientSocket[] = [];
 let nextTrack = 5000;
+// Runs once, right before the next call to the catalog.
+let beforeDeezer: (() => Promise<unknown>) | undefined;
 
 beforeAll(async () => {
-	t = await buildTestApp({ previewMs: 60_000 });
+	t = await buildTestApp({
+		previewMs: 60_000,
+		deezerFetch: async (...args) => {
+			const hook = beforeDeezer;
+			beforeDeezer = undefined;
+			await hook?.();
+			return fakeDeezerFetch(...args);
+		},
+	});
 	url = await listen(t);
 	owner = await createUser(t, 'Owner');
 });
@@ -60,6 +71,18 @@ describe('suggestions and ranking', () => {
 		const id = await newEvent();
 		const state = await suggest(owner, id, 4242);
 		expect(state.current?.track.id).toBe(4242);
+		expect(state.queue).toEqual([]);
+	});
+
+	it('starts playing a suggestion made while the last track was ending', async () => {
+		const id = await newEvent();
+		const first = await suggest(owner, id);
+		beforeDeezer = () =>
+			call(t, 'POST', `/events/${id}/next`, owner, {
+				currentEntryId: first.current!.entryId,
+			});
+		const state = await suggest(owner, id, 4343);
+		expect(state.current?.track.id).toBe(4343);
 		expect(state.queue).toEqual([]);
 	});
 
@@ -177,6 +200,25 @@ describe('playback', () => {
 		expect((await state()).current).toBeNull();
 	});
 
+	it('refreshes an old preview link when its track starts playing', async () => {
+		const { id, queue } = await eventWithQueue(1);
+		const deezerId = queue[0]!.track.id;
+		await t.prisma.track.update({
+			where: { deezerId },
+			data: {
+				previewUrl: 'https://cdn.deezer.test/expired.mp3',
+				updatedAt: new Date(Date.now() - 11 * 60 * 1000),
+			},
+		});
+		const playing = (await getState(owner, id)).current!.entryId;
+		const res = await call(t, 'POST', `/events/${id}/next`, owner, {
+			currentEntryId: playing,
+		});
+		expect(res.json().current.track.previewUrl).toBe(
+			`https://cdn.deezer.test/preview/${deezerId}.mp3`,
+		);
+	});
+
 	it('only the owner skips', async () => {
 		const { id } = await eventWithQueue(1);
 		const [other] = (await createUsers(t, 1)) as [TestUser];
@@ -224,5 +266,27 @@ describe('broadcast', () => {
 		const s = await connectSocket(url, stranger);
 		sockets.push(s);
 		expect(await emitAck(s, 'room:join', { kind: 'event', id })).toMatchObject({ ok: false });
+	});
+
+	it('making an event private removes the strangers from its room', async () => {
+		const { id } = await eventWithQueue(0);
+		const [stranger, guest] = (await createUsers(t, 2)) as [TestUser, TestUser];
+		await call(t, 'POST', `/events/${id}/invites`, owner, { userId: guest.id });
+		const received = { stranger: 0, guest: 0 };
+		for (const [who, user] of [
+			['stranger', stranger],
+			['guest', guest],
+		] as const) {
+			const s = await connectSocket(url, user);
+			sockets.push(s);
+			expect(await emitAck(s, 'room:join', { kind: 'event', id })).toEqual({ ok: true });
+			s.on('event:state', () => received[who]++);
+		}
+		const res = await call(t, 'PATCH', `/events/${id}`, owner, { visibility: 'PRIVATE' });
+		expect(res.statusCode).toBe(200);
+		await suggest(owner, id);
+		await new Promise((r) => setTimeout(r, 400));
+		expect(received.guest).toBeGreaterThan(0);
+		expect(received.stranger).toBe(0);
 	});
 });

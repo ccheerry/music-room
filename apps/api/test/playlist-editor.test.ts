@@ -111,7 +111,46 @@ describe('operations by id', () => {
 	});
 });
 
+describe('room access', () => {
+	it('making a playlist private removes the strangers from its room', async () => {
+		const { id } = await playlistWith(1);
+		const [stranger, member] = [users[1]!, users[2]!];
+		await call(t, 'POST', `/playlists/${id}/members`, owner(), { userId: member.id });
+		const received = { stranger: 0, member: 0 };
+		for (const [who, user] of [
+			['stranger', stranger],
+			['member', member],
+		] as const) {
+			const s = await connectSocket(url, user);
+			sockets.push(s);
+			expect(await emitAck(s, 'room:join', { kind: 'playlist', id })).toEqual({ ok: true });
+			s.on('playlist:state', () => received[who]++);
+		}
+		const res = await call(t, 'PATCH', `/playlists/${id}`, owner(), {
+			visibility: 'PRIVATE',
+		});
+		expect(res.statusCode).toBe(200);
+		await call(t, 'POST', `/playlists/${id}/entries`, owner(), { deezerId: 190 });
+		await new Promise((r) => setTimeout(r, 300));
+		expect(received.member).toBeGreaterThan(0);
+		expect(received.stranger).toBe(0);
+	});
+});
+
 describe('concurrency', () => {
+	it('60 parallel additions: every one is stored, none refused', async () => {
+		const { id } = await playlistWith(0);
+		const results = await Promise.all(
+			Array.from({ length: 60 }, (_, i) =>
+				call(t, 'POST', `/playlists/${id}/entries`, anyone(i), { deezerId: 300 + (i % 5) }),
+			),
+		);
+		expect(results.map((r) => r.statusCode).filter((c) => c !== 200)).toEqual([]);
+		const state = await read(id);
+		expect(state.entries).toHaveLength(60);
+		expect(state.version).toBe(60);
+	});
+
 	it('30 parallel moves of different entries: no lost update, unique positions', async () => {
 		const { id, state } = await playlistWith(30);
 		const ids = state.entries.map((e) => e.id);

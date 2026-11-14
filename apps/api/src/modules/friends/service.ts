@@ -1,5 +1,6 @@
 import type { FriendRequestResult, Relation, UserSummary } from '@music-room/shared';
 import type { PrismaClient } from '../../db.js';
+import { LIST_CAP } from '../../lib/limits.js';
 import { httpError } from '../../plugins/errors.js';
 import { isUniqueViolation } from '../auth/service.js';
 
@@ -78,6 +79,7 @@ export function createFriendsService({ prisma, onUnfriend }: FriendsDeps) {
 	async function list(userId: string): Promise<UserSummary[]> {
 		const rows = await prisma.friendship.findMany({
 			where: { status: 'ACCEPTED', OR: [{ userAId: userId }, { userBId: userId }] },
+			take: LIST_CAP,
 			include: { userA: summary, userB: summary },
 		});
 		return rows
@@ -88,6 +90,7 @@ export function createFriendsService({ prisma, onUnfriend }: FriendsDeps) {
 	async function requests(userId: string) {
 		const rows = await prisma.friendship.findMany({
 			where: { status: 'PENDING', OR: [{ userAId: userId }, { userBId: userId }] },
+			take: LIST_CAP,
 			include: { userA: summary, userB: summary },
 			orderBy: { createdAt: 'desc' },
 		});

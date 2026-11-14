@@ -45,8 +45,24 @@ export function createPlaylistEditor({ prisma, catalog, broadcast }: EditorDeps)
 		throw httpError(409, 'STALE', message, { state: await state(playlistId) });
 	}
 
+	// One operation at a time per playlist inside this process, so the ones waiting do not
+	// each hold a database connection. The row lock below still orders several instances.
+	const tails = new Map<string, Promise<unknown>>();
+	function inTurn<T>(playlistId: string, run: () => Promise<T>): Promise<T> {
+		const result = (tails.get(playlistId) ?? Promise.resolve()).then(run);
+		const tail = result.catch(() => undefined);
+		tails.set(playlistId, tail);
+		void tail.then(() => {
+			if (tails.get(playlistId) === tail) tails.delete(playlistId);
+		});
+		return result;
+	}
+
 	// Serialises operations on one playlist: row lock, then the change, then version++.
-	async function locked(
+	const locked = (playlistId: string, op: (tx: Tx) => Promise<void>) =>
+		inTurn(playlistId, () => lockedInDb(playlistId, op));
+
+	async function lockedInDb(
 		playlistId: string,
 		op: (tx: Tx) => Promise<void>,
 	): Promise<PlaylistState> {

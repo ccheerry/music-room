@@ -207,6 +207,41 @@ describe('revocation', () => {
 		expect(received).toBe(false);
 	});
 
+	it('a grant that runs out ends the live remote', async () => {
+		await grant(friend, { expiresAt: new Date(Date.now() + 500).toISOString() });
+		const remote = await open(friend);
+		expect(await emitAck(remote, 'room:join', { kind: 'remote', id: deviceId })).toEqual({
+			ok: true,
+		});
+		expect(await nextEvent(remote, 'device:revoked')).toEqual({ deviceId });
+
+		let received = false;
+		remote.once('device:status', () => (received = true));
+		await emitAck(speaker, 'device:status', STATUS());
+		await new Promise((r) => setTimeout(r, 150));
+		expect(received).toBe(false);
+	});
+
+	it('an end date set during a session still ends it', async () => {
+		await grant(friend);
+		const remote = await open(friend);
+		await emitAck(remote, 'room:join', { kind: 'remote', id: deviceId });
+		const notified = nextEvent(remote, 'device:revoked');
+		await grant(friend, { expiresAt: new Date(Date.now() + 300).toISOString() });
+		expect(await notified).toEqual({ deviceId });
+	});
+
+	it('extending a grant keeps the live remote open', async () => {
+		await grant(friend, { expiresAt: new Date(Date.now() + 300).toISOString() });
+		const remote = await open(friend);
+		await emitAck(remote, 'room:join', { kind: 'remote', id: deviceId });
+		await grant(friend, {});
+		await new Promise((r) => setTimeout(r, 500));
+		const got = nextEvent(remote, 'device:status');
+		await emitAck(speaker, 'device:status', STATUS());
+		expect(await got).toEqual(STATUS());
+	});
+
 	it('ending the friendship revokes control', async () => {
 		const pal = await createUser(t, 'Pal');
 		await befriend(owner, pal);

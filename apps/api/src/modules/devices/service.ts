@@ -12,6 +12,8 @@ import type { Realtime, SocketHandler } from '../realtime/server.js';
 import { socketFail } from '../realtime/server.js';
 
 const user = { select: { id: true, displayName: true } } as const;
+// Longest delay a Node timer accepts.
+const MAX_TIMER_MS = 2 ** 31 - 1;
 const active = () => ({ OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }] });
 
 type DevicesDeps = { prisma: PrismaClient; friends: FriendsService; realtime: Realtime };
@@ -19,15 +21,52 @@ type DevicesDeps = { prisma: PrismaClient; friends: FriendsService; realtime: Re
 export function createDevicesService({ prisma, friends, realtime }: DevicesDeps) {
 	const online = (deviceId: string) => realtime.roomSize(`device:${deviceId}`) > 0;
 
-	// The only place that decides who may control a device.
-	async function canControl(userId: string, deviceId: string): Promise<boolean> {
+	const expiries = new Map<string, NodeJS.Timeout>();
+
+	// The only place that decides who may control a device, and until when (null = no end).
+	async function access(
+		userId: string,
+		deviceId: string,
+	): Promise<{ until: Date | null } | null> {
 		const device = await prisma.device.findUnique({ where: { id: deviceId } });
-		if (!device) return false;
-		if (device.userId === userId) return true;
+		if (!device) return null;
+		if (device.userId === userId) return { until: null };
 		const grant = await prisma.controlGrant.findFirst({
 			where: { deviceId, granteeId: userId, ...active() },
 		});
-		return grant !== null;
+		return grant && { until: grant.expiresAt };
+	}
+
+	const canControl = async (userId: string, deviceId: string) =>
+		(await access(userId, deviceId)) !== null;
+
+	// Entering the controllers' room: a grant with an end date also arms its own removal.
+	async function canJoin(userId: string, deviceId: string): Promise<boolean> {
+		const allowed = await access(userId, deviceId);
+		if (allowed?.until) watchExpiry(deviceId, userId, allowed.until);
+		return allowed !== null;
+	}
+
+	// Checked again when the timer fires: the grant may have been extended meanwhile.
+	function watchExpiry(deviceId: string, userId: string, until: Date): void {
+		const key = `${deviceId}:${userId}`;
+		clearTimeout(expiries.get(key));
+		const delay = Math.min(Math.max(0, until.getTime() - Date.now()) + 10, MAX_TIMER_MS);
+		const timer = setTimeout(() => {
+			expiries.delete(key);
+			access(userId, deviceId)
+				.then((allowed) => {
+					if (!allowed) return revoked(deviceId, userId);
+					if (allowed.until) watchExpiry(deviceId, userId, allowed.until);
+				})
+				.catch(() => undefined);
+		}, delay);
+		expiries.set(key, timer);
+	}
+
+	function stop(): void {
+		for (const timer of expiries.values()) clearTimeout(timer);
+		expiries.clear();
 	}
 
 	async function owned(userId: string, deviceId: string) {
@@ -106,6 +145,8 @@ export function createDevicesService({ prisma, friends, realtime }: DevicesDeps)
 			create: { deviceId, granteeId, ...data },
 			update: data,
 		});
+		// Also covers a friend already in the live remote when the end date is set.
+		if (data.expiresAt) watchExpiry(deviceId, granteeId, data.expiresAt);
 	}
 
 	async function revoke(userId: string, deviceId: string, granteeId: string): Promise<void> {
@@ -184,6 +225,8 @@ export function createDevicesService({ prisma, friends, realtime }: DevicesDeps)
 
 	return {
 		canControl,
+		canJoin,
+		stop,
 		list,
 		rename,
 		remove,

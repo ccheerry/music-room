@@ -8,8 +8,10 @@ import {
 	type UserSummary,
 	type VoteZone,
 	CreateEventBody as CreateSchema,
+	EventErrorCode,
 } from '@music-room/shared';
 import type { PrismaClient } from '../../db.js';
+import { LIST_CAP } from '../../lib/limits.js';
 import type { Event, Prisma } from '../../generated/prisma/client.js';
 import { httpError } from '../../plugins/errors.js';
 import { isUniqueViolation } from '../auth/service.js';
@@ -44,6 +46,8 @@ export type EventHooks = {
 	// After an event is deleted or a user loses access to it.
 	onDeleted: (eventId: string) => void;
 	onAccessLost: (eventId: string, userId: string) => Promise<void>;
+	// After a public event became private: some of its viewers may no longer see it.
+	onRestricted: (eventId: string) => Promise<void>;
 };
 
 export function createEventsService({
@@ -98,7 +102,7 @@ export function createEventsService({
 			include: { owner },
 		});
 		const refusal = await voteRefusal(prisma, event, userId, undefined);
-		const locationOnly = refusal?.code === 'LOCATION_REQUIRED';
+		const locationOnly = refusal?.code === EventErrorCode.NeedsLocation;
 		return {
 			...summary(withOwner, userId, await isInvited(prisma, eventId, userId)),
 			zone: zoneOf(event),
@@ -134,6 +138,9 @@ export function createEventsService({
 			where: { id: eventId },
 			data: { ...rest, ...zoneColumns(zone), version: { increment: 1 } },
 		});
+		if (event.visibility === 'PUBLIC' && rest.visibility === 'PRIVATE') {
+			await hooks.onRestricted(eventId);
+		}
 		return detail(userId, eventId);
 	}
 
@@ -166,6 +173,7 @@ export function createEventsService({
 		const rows = await prisma.eventInvite.findMany({
 			where: { eventId },
 			include: { user: owner },
+			take: LIST_CAP,
 			orderBy: { createdAt: 'asc' },
 		});
 		return rows.map((r) => r.user);

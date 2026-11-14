@@ -5,8 +5,8 @@ import { createLru } from '../../lib/lru.js';
 import type { DeezerClient } from './deezer.js';
 
 const MINUTE = 60 * 1000;
-// Deezer preview URLs are signed and expire; refresh stored ones older than this.
-const PREVIEW_MAX_AGE_MS = 3 * 60 * MINUTE;
+// Deezer preview URLs are signed for 15 minutes; refresh stored ones older than this.
+const PREVIEW_MAX_AGE_MS = 10 * MINUTE;
 
 export const toTrack = (row: TrackRow): Track => ({
 	id: row.deezerId,
@@ -29,13 +29,25 @@ export function createCatalogService({
 	const searches = createLru<Track[]>(500, 5 * MINUTE);
 	const genreCache = createLru<Genre[]>(1, 24 * 60 * MINUTE);
 
+	// Identical searches arriving together share one call to Deezer.
+	const pending = new Map<string, Promise<Track[]>>();
+
 	async function search(q: string, limit: number): Promise<Track[]> {
 		const key = `${q.toLowerCase()}|${limit}`;
 		const cached = searches.get(key);
 		if (cached) return cached;
-		const tracks = await deezer.search(q, limit);
-		searches.set(key, tracks);
-		return tracks;
+		let call = pending.get(key);
+		if (!call) {
+			call = deezer
+				.search(q, limit)
+				.then((tracks) => {
+					searches.set(key, tracks);
+					return tracks;
+				})
+				.finally(() => pending.delete(key));
+			pending.set(key, call);
+		}
+		return call;
 	}
 
 	// Stored snapshot of a track, fetched from Deezer when missing or stale.

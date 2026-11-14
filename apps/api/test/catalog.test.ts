@@ -52,6 +52,20 @@ describe('GET /tracks/:deezerId', () => {
 		});
 	});
 
+	it('asks Deezer again once the stored preview link is about to expire', async () => {
+		const id = 3200000 + Math.floor(Math.random() * 100000);
+		await call(t, 'GET', `/tracks/${id}`, user);
+		await t.prisma.track.update({
+			where: { deezerId: id },
+			data: {
+				previewUrl: 'https://cdn.deezer.test/expired.mp3',
+				updatedAt: new Date(Date.now() - 11 * 60 * 1000),
+			},
+		});
+		const res = await call(t, 'GET', `/tracks/${id}`, user);
+		expect(res.json().previewUrl).toBe(`https://cdn.deezer.test/preview/${id}.mp3`);
+	});
+
 	it('answers 404 for a track Deezer does not know', async () => {
 		const res = await call(t, 'GET', '/tracks/900000001', user);
 		expect(res.statusCode).toBe(404);
@@ -126,6 +140,29 @@ describe('Deezer client', () => {
 });
 
 describe('search cache', () => {
+	it('asks Deezer once when the same search arrives many times at once', async () => {
+		let calls = 0;
+		const counting = await buildTestApp({
+			deezerFetch: (async (...args: Parameters<typeof fetch>) => {
+				calls++;
+				await new Promise((r) => setTimeout(r, 50));
+				return fakeDeezerFetch(...args);
+			}) as typeof fetch,
+		});
+		try {
+			const who = await createUser(counting);
+			const answers = await Promise.all(
+				Array.from({ length: 20 }, () =>
+					call(counting, 'GET', '/tracks/search?q=stampede', who),
+				),
+			);
+			expect(answers.every((r) => r.statusCode === 200)).toBe(true);
+			expect(calls).toBe(1);
+		} finally {
+			await closeTestApp(counting);
+		}
+	});
+
 	it('serves a repeated search without calling Deezer again', async () => {
 		const fetch = vi.fn(fakeDeezerFetch);
 		const { createCatalogService } = await import('../src/modules/catalog/service.js');

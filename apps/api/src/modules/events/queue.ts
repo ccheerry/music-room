@@ -127,7 +127,7 @@ export function createEventQueue({
 			const top = await tx.eventTrack.findFirst({
 				where: { eventId, playedAt: null },
 				orderBy: [{ votes: { _count: 'desc' } }, { createdAt: 'asc' }, { id: 'asc' }],
-				select: { id: true },
+				select: { id: true, trackId: true },
 			});
 			const { count } = await tx.event.updateMany({
 				where: { id: eventId, currentEntryId: expected },
@@ -142,8 +142,11 @@ export function createEventQueue({
 			return top ?? null;
 		});
 		if (next === undefined) return false;
-		if (next) schedule(eventId, next.id, now);
-		else clearTimeout(timers.get(eventId));
+		if (next) {
+			schedule(eventId, next.id, now);
+			// The stored preview link may have expired while the track waited in the queue.
+			await catalog.getTrack(next.trackId).catch(() => undefined);
+		} else clearTimeout(timers.get(eventId));
 		broadcast(eventId);
 		return true;
 	}
@@ -165,7 +168,7 @@ export function createEventQueue({
 
 	// A suggestion counts as the suggester's vote; an already queued track just gets the vote.
 	async function suggest(userId: string, eventId: string, deezerId: number, coords?: Coords) {
-		const event = await assertCanVote(userId, eventId, coords);
+		await assertCanVote(userId, eventId, coords);
 		const track = await catalog.getTrack(deezerId);
 		if (!track.previewUrl) {
 			throw httpError(422, EventErrorCode.NoPreview, 'This track has no preview to play');
@@ -186,7 +189,8 @@ export function createEventQueue({
 		if (!entry) throw httpError(409, EventErrorCode.Stale, 'Try again');
 		await addVote(entry.id, userId);
 		await bump(eventId);
-		if (!event.currentEntryId) await advance(eventId, null);
+		// No-op while something plays; asked again here since the event may have gone idle.
+		await advance(eventId, null);
 		broadcast(eventId);
 		return stateFor(userId, eventId);
 	}
