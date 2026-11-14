@@ -63,7 +63,10 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
 	app.setValidatorCompiler(validatorCompiler);
 	app.setSerializerCompiler(serializerCompiler);
 	registerErrorHandlers(app);
-	await app.register(cors, { origin: env.CORS_ORIGINS });
+	await app.register(cors, {
+		origin: env.CORS_ORIGINS,
+		methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE'],
+	});
 	await registerSwagger(app);
 	await registerAuth(app, env);
 	registerActionLog(app, prisma);
