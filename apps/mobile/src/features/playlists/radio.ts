@@ -11,7 +11,11 @@ export function playInOrder(tracks: Track[], index: number, source: string): voi
 		onEnd: () => playInOrder(tracks, at + 1, source),
 		controls: {
 			next: () => playInOrder(tracks, at + 1, source),
-			prev: () => playInOrder(tracks, Math.max(0, at - 1), source),
+			// The closest playable track before this one; the same track when there is none.
+			prev: () => {
+				const before = tracks.slice(0, at).findLastIndex((t) => t.previewUrl);
+				playInOrder(tracks, before === -1 ? at : before, source);
+			},
 		},
 	});
 }
