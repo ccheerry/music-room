@@ -40,7 +40,9 @@
 				{
 					"locationWhenInUsePermission": "Music Room uses your location to check that you are at the event when you vote."
 				}
-			]
+			],
+			"expo-image",
+			"expo-status-bar"
 		],
 		"experiments": {
 			"typedRoutes": true,
