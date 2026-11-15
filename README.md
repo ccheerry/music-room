@@ -84,10 +84,7 @@ address can be changed from its settings.
 
 ```bash
 cp .env.example .env          # OAuth client ids are optional
-make install                  # npm ci for every workspace
-docker compose up -d postgres mailpit
-make migrate seed             # schema + demo users, an event and a playlist
-make dev                      # api in watch mode + Expo, scan the QR code
+make dev                      # installs, migrates and seeds if needed, then api + Expo
 ```
 
 API on `http://localhost:3000`, interactive docs on `http://localhost:3000/docs`,
@@ -174,7 +171,8 @@ make           # list every target (same as make help)
 make install   # install every workspace, build shared, generate the Prisma client
 make up        # start postgres, mailpit and the api in Docker (migrations applied on start)
 make down      # stop the Docker stack
-make dev       # api in watch mode + Expo
+make setup     # install, migrate and seed whatever is missing (postgres and mailpit in Docker)
+make dev       # setup, then api in watch mode + Expo
 make migrate   # apply Prisma migrations
 make seed      # load demo data
 make test      # shared, api and mobile test suites

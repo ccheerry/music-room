@@ -11,14 +11,35 @@ install: ## Install every workspace, build shared, generate the Prisma client
 	npm run build -w @music-room/shared
 	cd apps/api && npx prisma generate
 
+# File targets: each step only runs when its output is missing or older than its inputs.
+node_modules/.package-lock.json: package-lock.json
+	npm ci
+
+packages/shared/dist: node_modules/.package-lock.json $(shell find packages/shared/src -type f)
+	npm run build -w @music-room/shared
+	touch $@
+
+apps/api/src/generated/prisma: node_modules/.package-lock.json apps/api/prisma/schema.prisma
+	cd apps/api && npx prisma generate
+	touch $@
+
+.env:
+	@echo "missing .env: copy .env.example to .env and fill it in" && exit 1
+
+setup: .env packages/shared/dist apps/api/src/generated/prisma ## Install, migrate and seed whatever is missing
+	docker compose up -d --wait postgres mailpit
+	cd apps/api && $(LOAD_ENV) && npx prisma migrate deploy
+	@docker compose exec -T postgres sh -c \
+		'psql -U "$$POSTGRES_USER" -d "$$POSTGRES_DB" -tAc "SELECT 1 FROM \"User\" LIMIT 1"' | grep -q 1 \
+		|| $(MAKE) --no-print-directory seed
+
 up: ## Start postgres, mailpit and the api in Docker, and wait until the api answers
 	docker compose up -d --build --wait
 
 down: ## Stop the Docker stack
 	docker compose down
 
-dev: ## Api in watch mode + Expo (postgres and mailpit in Docker)
-	docker compose up -d postgres mailpit
+dev: setup ## Api in watch mode + Expo (runs setup first)
 	trap 'kill 0' INT; $(API) dev & $(ROOT_ENV) && npm -w @music-room/mobile run start
 
 migrate: ## Apply Prisma migrations
@@ -75,4 +96,4 @@ fclean: clean ## Also remove volumes, local images and node_modules
 	docker compose down -v --rmi local
 	rm -rf node_modules apps/*/node_modules packages/*/node_modules
 
-.PHONY: help install up down dev migrate seed test coverage audit lint format docs mobile loadtest clean fclean
+.PHONY: help install setup up down dev migrate seed test coverage audit lint format docs mobile loadtest clean fclean

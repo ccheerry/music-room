@@ -47,11 +47,10 @@ Nothing is vendored: every dependency is downloaded by `make install`.
 
 ```bash
 cp .env.example .env    # fill in the values described below
-make install            # install every workspace (always first: nothing runs without it)
-docker compose up -d postgres mailpit
-make migrate seed       # apply the schema and load demo data
 make dev                # api in watch mode + Expo dev server
 ```
+
+`make dev` runs `make setup` first, which only does what is missing: installs the dependencies when `package-lock.json` changed, builds `packages/shared`, generates the Prisma client, starts Postgres and Mailpit, applies pending migrations and loads the demo data into an empty database.
 
 The shortest way to a running backend, with the API in Docker as well:
 
@@ -121,7 +120,8 @@ make           # list every target (same as make help)
 make install   # install every workspace, build shared, generate the Prisma client
 make up        # start postgres, mailpit and the api in Docker (migrations applied on start)
 make down      # stop the Docker stack
-make dev       # api in watch mode + Expo
+make setup     # install, migrate and seed whatever is missing (postgres and mailpit in Docker)
+make dev       # setup, then api in watch mode + Expo
 make migrate   # apply Prisma migrations
 make seed      # load demo data
 make test      # shared, api and mobile test suites
