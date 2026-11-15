@@ -9,7 +9,7 @@ Everything ran on one machine: the API, the database and the load generator.
 
 | Item | Value |
 |---|---|
-| Type | On premise, a laptop on mains power |
+| Type | On premise, a laptop on mains power, performance power profile |
 | CPU | Intel Core i5-13500H, 16 threads |
 | RAM | 15 GiB |
 | OS | Linux 6.18 (x86_64), Docker 29.9 |
@@ -58,12 +58,12 @@ Response times in milliseconds. "Users at once" is the plateau, `rate x session 
 
 | New users / s | Users at once | Requests / s | p50 | p95 | p99 | API CPU | DB CPU | Result |
 |---|---|---|---|---|---|---|---|---|
-| 4 | 130 | 68 | 19 | 36 | 51 | 45 % | 42 % | pass |
-| 8 | 260 | 144 | 22 | 54 | 78 | 69 % | 63 % | pass |
-| 12 | 400 | 213 | 25 | 76 | 111 | 92 % | 86 % | pass |
-| 20 | 660 | 246 | 1224 | 3906 | 5379 | 108 % | 102 % | fail |
+| 8 | 260 | 144 | 13 | 27 | 36 | 45 % | 35 % | pass |
+| 12 | 385 | 208 | 15 | 37 | 61 | 76 % | 55 % | pass |
+| 16 | 530 | 270 | 24 | 162 | 198 | 101 % | 86 % | pass |
+| 20 | 880 | 277 | 257 | 2516 | 3072 | 112 % | 84 % | fail |
 
-**About 400 users voting at the same time in one event.** Each of them votes every 2 s, which
+**About 530 users voting at the same time in one event.** Each of them votes every 2 s, which
 is far more than people do at a party: the same server follows several times more people who
 mostly watch the queue.
 
@@ -71,68 +71,69 @@ mostly watch the queue.
 
 | New users / s | Users at once | Requests / s | p50 | p95 | p99 | API CPU | DB CPU | Result |
 |---|---|---|---|---|---|---|---|---|
-| 4 | 125 | 66 | 26 | 89 | 215 | 69 % | 32 % | pass |
-| 8 | 250 | 71 | 2725 | 6187 | 7710 | 93 % | 35 % | fail |
+| 4 | 120 | 68 | 22 | 59 | 74 | 51 % | 17 % | pass |
+| 6 | 245 | 83 | 66 | 3072 | 3396 | 83 % | 20 % | fail |
 
-**About 125 users editing the same playlist at the same time**, one edit every 2 s each.
+**About 120 users editing the same playlist at the same time**, one edit every 2 s each.
 Edits of one playlist are applied one after the other, so its throughput is capped by the
-time of one edit (about 70 edits per second here), whatever the number of users.
+time of one edit (about 80 requests per second here), whatever the number of users. The
+failing run has no error: every edit is applied, late.
 
 ### Music Control Delegation
 
-Response time is the acknowledgement of a socket message by the server, after the grant
-check and the relay.
+Each user sends a command to a friend's device and reports the status of their own every
+4 s. The response time is the one of the HTTP request that lists the controllable devices,
+made while the socket traffic is at its plateau.
 
-| New users / s | Users at once | Messages / s | Ack p95 | API CPU | DB CPU | API memory | Result |
-|---|---|---|---|---|---|---|---|
-| 40 | 1300 | 709 | 0.3 | 81 % | 60 % | 340 MB | pass |
-| 80 | 2600 | 1372 | 0.3 | 104 % | 103 % | 948 MB | pass |
-| 160 | 5300 | 2718 | 0.3 | above 100 % | 86 % | 948 MB | pass |
-| 320 | 10000 | - | - | - | - | 4 GB | process out of memory |
+| New users / s | Users at once | Socket messages / s | p50 | p95 | p99 | API CPU | DB CPU | Result |
+|---|---|---|---|---|---|---|---|---|
+| 20 | 640 | 369 | 3 | 8 | 13 | 30 % | 11 % | pass |
+| 40 | 1280 | 706 | 3 | 11 | 18 | 56 % | 19 % | pass |
+| 60 | 1920 | 1044 | 3 | 13 | 22 | 74 % | 29 % | pass |
+| 80 | 2800 | 1131 | 23 | 5379 | 5598 | 106 % | 39 % | fail |
+| 160 | - | 1299 | 2276 | 6187 | 7557 | 102 % | 44 % | fail, 39 % of the users time out |
+| 320 | - | 1301 | 2019 | 5827 | 7408 | 108 % | 48 % | fail, 67 % of the users time out |
 
-**About 5000 users controlling a device at the same time**, each sending a command and a
-status report every 4 s.
+**About 1900 users controlling a device at the same time.** Beyond it the process relays
+about 1300 messages per second and no more. At every rate, including the last one, it stays
+up and its memory stays under 250 MB.
 
 ### Mixed use
 
 | New users / s | Users at once | Requests / s | p50 | p95 | p99 | API CPU | DB CPU | Result |
 |---|---|---|---|---|---|---|---|---|
-| 5 | 125 | 86 | 15 | 47 | 97 | 49 % | 31 % | pass |
-| 10 | 250 | 178 | 16 | 97 | 202 | 94 % | 61 % | pass |
-| 15 | 375 | 199 | 93 | 2618 | - | 105 % | 80 % | fail |
+| 10 | 250 | 181 | 11 | 50 | 74 | 67 % | 33 % | pass |
+| 15 | 480 | 242 | 13 | 2725 | 3328 | 96 % | 43 % | fail |
 
 **About 250 users in a continuous session** made of browsing, searching and the three
-services.
+services. The failing run has no error either: every request is answered `200`, late.
 
 ## Bottleneck
 
 The API process. Node.js runs the application on one thread, and every failing run shows
-that process at 100 % of one core while memory, the 10 database connections and the other
-15 hardware threads are not exhausted. PostgreSQL comes second: it reaches 60 to 100 % of a
-core at the same moment, because one vote costs about six queries (permission, entry, vote,
-version, the ranked queue, the caller's votes) and returns the whole state.
+that process at 100 % of one core while memory (under 250 MB), the 10 database connections
+and the other 15 hardware threads are not exhausted. PostgreSQL comes second: it reaches
+85 % of a core in the vote scenario, because one vote costs about six queries (permission,
+entry, vote, version, the ranked queue, the caller's votes) and returns the whole state.
 
-The server holds about 200 to 250 requests per second, whatever the scenario. The number of
-users that represents depends on how often each one acts.
+The server holds about 250 requests per second, or 1300 socket messages per second. The
+number of users that represents depends on how often each one acts.
 
 ## What the measure changed
 
-Three weaknesses appeared under load and were fixed. Only the first two have a measure
-after the fix.
+A first round of runs showed three weaknesses. They were fixed, and the tables above come
+from the runs made after the fixes.
 
 | Problem found | Before | Change | After |
 |---|---|---|---|
-| Playlist edits waiting for the row lock each held a database connection; with 10 of them waiting, every other request failed | At 8 new users / s: 656 answers `500` | Edits of one playlist wait their turn inside the API process and take a connection only when it is their turn; a saturated database now answers `503` with `Retry-After` | Same load: no `500`; the response time is still above the limit, since the edits remain sequential |
-| Every action started its own insert into the action log; under a flood of socket messages the pending inserts piled up in memory | At 320 new users / s: 4 GB of heap, process killed | The action log is written in batches from a bounded buffer; beyond it rows are dropped and counted | Same load: the process stays up under 1 GB; about 100 000 log rows dropped per run and reported in the server log |
-| The same search arriving many times at once called Deezer once per request, reaching Deezer's quota | At 15 new users / s in the mixed run: 820 answers `503`, 133 answers `502` | Identical searches in flight share one call | Covered by a test, not measured again |
-
-The vote, playlist and mixed tables above were measured before the action-log change. It
-removes one insert per request and was not measured again on these three scenarios.
+| Playlist edits waiting for the row lock each held a database connection; with 10 of them waiting, every other request failed | At 8 new users / s: 656 answers `500` | Edits of one playlist wait their turn inside the API process and take a connection only when it is their turn; a saturated database answers `503` with `Retry-After` | No error at any rate: an overloaded playlist is slow, not broken |
+| Every action started its own insert into the action log; under a flood of socket messages the pending inserts piled up in memory | At 320 new users / s: 4 GB of heap, process killed | The action log is written in batches from a bounded buffer; beyond it rows are dropped and counted | Same load: the process stays up under 250 MB; the log rows that do not fit are dropped and reported in the server log (none up to 60 new users / s) |
+| The same search arriving many times at once called Deezer once per request, reaching Deezer's quota | At 15 new users / s in the mixed run: 820 answers `503`, 133 answers `502` | Identical searches in flight share one call | Same load: every answer is `200` |
 
 ## Consistency with the hardware
 
-One laptop core serves a few hundred very active users of one room, or a few thousand
-connected users who act now and then. That matches the scale given as a reference for this
+One laptop core serves a few hundred very active users of one room, or about two thousand
+connected users who act every few seconds. That matches the scale given as a reference for this
 kind of machine: thousands of users for a low-end server, far fewer on smaller hardware.
 
 ## Scaling path
