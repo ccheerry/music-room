@@ -25,6 +25,7 @@ android/
 coverage/
 loadtest/reports/
 loadtest/data/
+results.sarif
 .maestro/screenshots/
 
 # Logs
