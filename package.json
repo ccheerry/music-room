@@ -12,9 +12,9 @@
 		"esbuild@0.28.2": true,
 		"prisma@7.10.1": true,
 		"@prisma/engines@7.10.1": true,
-		"argon2@0.45.1": true,
+		"argon2@0.45.2": true,
 		"@parcel/watcher@2.6.0": true,
-		"unrs-resolver@1.12.2": true,
+		"unrs-resolver@1.13.0": true,
 		"@playwright/browser-chromium": false,
 		"protobufjs": false,
 		"unix-dgram": false
@@ -37,6 +37,28 @@
 	},
 	"overrides": {
 		"react": "19.3.0",
-		"react-dom": "19.3.0"
+		"react-dom": "19.3.0",
+		"jest-config": {
+			"glob": "^14.0.6"
+		},
+		"@jest/reporters": {
+			"glob": "^14.0.6"
+		},
+		"jest-runtime": {
+			"glob": "^14.0.6"
+		},
+		"test-exclude@7": {
+			"glob": "^14.0.6",
+			"minimatch": "^11.0.8"
+		},
+		"@typescript-eslint/typescript-estree": {
+			"minimatch": "^11.0.8"
+		},
+		"@oclif/core": {
+			"minimatch": "^11.0.8"
+		},
+		"@expo/fingerprint": {
+			"minimatch": "^11.0.8"
+		}
 	}
 }
