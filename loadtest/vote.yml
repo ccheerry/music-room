@@ -1,0 +1,28 @@
+# Track Vote: every user sits in the room of one event and votes / unvotes random tracks.
+scenarios:
+  - name: vote
+    engine: socketio
+    socketio:
+      transports: [websocket]
+      auth: { token: '{{ token }}', platform: android, device: loadtest, appVersion: 1.0.0 }
+    flow:
+      - function: setIds
+      - emit:
+          channel: room:join
+          data: { kind: event, id: '{{ eventId }}' }
+          acknowledge: { match: { json: '$.ok', value: true } }
+      - get:
+          url: /api/v1/events/{{ eventId }}/state
+          headers: { Authorization: 'Bearer {{ token }}' }
+      - loop:
+          - function: pickStep
+          - post:
+              url: /api/v1/events/{{ eventId }}/tracks/{{ entryId }}/vote
+              headers: { Authorization: 'Bearer {{ token }}' }
+              json: {}
+          - think: 2
+          - delete:
+              url: /api/v1/events/{{ eventId }}/tracks/{{ entryId }}/vote
+              headers: { Authorization: 'Bearer {{ token }}' }
+          - think: 2
+        count: 8

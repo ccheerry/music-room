@@ -1,0 +1,37 @@
+# Control Delegation: every user is a device reporting its status and a controller sending
+# commands to the device a friend shared with them.
+scenarios:
+  - name: delegation
+    engine: socketio
+    socketio:
+      transports: [websocket]
+      auth: { token: '{{ token }}', platform: android, device: loadtest, appVersion: 1.0.0 }
+    flow:
+      # What the Control tab does before a remote is opened.
+      - get:
+          url: /api/v1/devices/controllable
+          headers: { Authorization: 'Bearer {{ token }}' }
+      - emit:
+          channel: room:join
+          data: { kind: remote, id: '{{ friendDeviceId }}' }
+          acknowledge: { match: { json: '$.ok', value: true } }
+      - loop:
+          - function: pickStep
+          - emit:
+              channel: device:command
+              data: { deviceId: '{{ friendDeviceId }}', action: '{{ action }}' }
+              acknowledge: { match: { json: '$.ok', value: true } }
+          - think: 2
+          - emit:
+              channel: device:status
+              data:
+                {
+                  deviceId: '{{ deviceId }}',
+                  playing: true,
+                  track: null,
+                  positionMs: 1000,
+                  volume: 0.8,
+                }
+              acknowledge: { match: { json: '$.ok', value: true } }
+          - think: 2
+        count: 8

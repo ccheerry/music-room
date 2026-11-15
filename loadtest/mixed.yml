@@ -1,0 +1,55 @@
+# A realistic session: browse, search, then one of the three services.
+scenarios:
+  - name: mixed
+    engine: socketio
+    socketio:
+      transports: [websocket]
+      auth: { token: '{{ token }}', platform: android, device: loadtest, appVersion: 1.0.0 }
+    flow:
+      - function: setIds
+      - get:
+          url: /api/v1/me
+          headers: { Authorization: 'Bearer {{ token }}' }
+      - get:
+          url: /api/v1/events
+          headers: { Authorization: 'Bearer {{ token }}' }
+      - get:
+          url: /api/v1/playlists
+          headers: { Authorization: 'Bearer {{ token }}' }
+      - think: 1
+      - function: pickStep
+      # Five fixed queries: the API cache absorbs them, Deezer's quota is not reached.
+      - get:
+          url: '/api/v1/tracks/search?q={{ search }}'
+          headers: { Authorization: 'Bearer {{ token }}' }
+      - get:
+          url: /api/v1/friends
+          headers: { Authorization: 'Bearer {{ token }}' }
+      - emit:
+          channel: room:join
+          data: { kind: event, id: '{{ eventId }}' }
+          acknowledge: { match: { json: '$.ok', value: true } }
+      - loop:
+          - function: pickStep
+          - post:
+              url: /api/v1/events/{{ eventId }}/tracks/{{ entryId }}/vote
+              headers: { Authorization: 'Bearer {{ token }}' }
+              json: {}
+          - think: 2
+          - post:
+              url: /api/v1/playlists/{{ playlistId }}/entries
+              headers: { Authorization: 'Bearer {{ token }}' }
+              json: { deezerId: '{{ trackId }}' }
+              capture:
+                - json: '$.entries[-1:].id'
+                  as: added
+          - think: 2
+          - delete:
+              url: /api/v1/playlists/{{ playlistId }}/entries/{{ added }}
+              headers: { Authorization: 'Bearer {{ token }}' }
+          - emit:
+              channel: device:command
+              data: { deviceId: '{{ friendDeviceId }}', action: '{{ action }}' }
+              acknowledge: { match: { json: '$.ok', value: true } }
+          - think: 2
+        count: 4

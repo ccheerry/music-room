@@ -24,6 +24,7 @@ android/
 # Tests / reports
 coverage/
 loadtest/reports/
+loadtest/data/
 .maestro/screenshots/
 
 # Logs

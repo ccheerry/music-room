@@ -1,0 +1,34 @@
+# Shared by every scenario: target, one seeded user per virtual user, load phases, limits.
+# The user's token is set per scenario (socketio.auth, beforeRequest): this file is read
+# before any user exists.
+config:
+  target: '{{ $env.LOADTEST_TARGET }}'
+  processor: ./processor.cjs
+  payload:
+    path: ./data/users.csv
+    fields: [token, deviceId, friendDeviceId]
+    order: sequence
+  defaults:
+    headers:
+      X-Platform: android
+      X-Device: loadtest
+      X-App-Version: 1.0.0
+  phases:
+    - name: warm-up
+      duration: 20
+      arrivalRate: 2
+    - name: ramp
+      duration: 90
+      arrivalRate: 2
+      rampTo: '{{ $env.LOADTEST_RATE }}'
+    - name: sustain
+      duration: 40
+      arrivalRate: '{{ $env.LOADTEST_RATE }}'
+  plugins:
+    ensure: {}
+  ensure:
+    thresholds:
+      - http.response_time.p95: 500
+      - socketio.response_time.p95: 500
+    conditions:
+      - expression: 'vusers.failed / vusers.created < 0.01'
