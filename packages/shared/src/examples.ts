@@ -37,8 +37,8 @@ const track = {
 	durationSec: 345,
 };
 const tokens = {
-	accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyZjI5In0.signature',
-	refreshToken: 'q3J0b2tlbi1leGFtcGxlLXJlZnJlc2gtdG9rZW4',
+	accessToken: '<access token, a JWT>',
+	refreshToken: '<refresh token>',
 	expiresIn: 900,
 };
 const zone = {
@@ -104,14 +104,14 @@ example(auth.RegisterBody, {
 });
 example(auth.LoginBody, { email: 'alice@musicroom.local', password: 'musicroom1' });
 example(auth.EmailBody, { email: 'alice@musicroom.local' });
-example(auth.VerifyBody, { token: 'N2Y4YjQ2ZjEtdmVyaWZ5LXRva2Vu' });
-example(auth.ResetBody, { token: 'N2Y4YjQ2ZjEtcmVzZXQtdG9rZW4', password: 'newpass99' });
+example(auth.VerifyBody, { token: '<token from the verification mail>' });
+example(auth.ResetBody, { token: '<token from the reset mail>', password: 'newpass99' });
 example(auth.RefreshBody, { refreshToken: tokens.refreshToken });
 example(auth.ChangePasswordBody, { currentPassword: 'musicroom1', newPassword: 'newpass99' });
 example(auth.TokenPair, tokens);
 example(auth.MeResponse, me);
-example(social.GoogleAuthBody, { idToken: 'eyJhbGciOiJSUzI1NiJ9.google-id-token.signature' });
-example(social.FacebookAuthBody, { accessToken: 'EAAGm0PX4ZCpsBA-facebook-access-token' });
+example(social.GoogleAuthBody, { idToken: '<Google id token>' });
+example(social.FacebookAuthBody, { accessToken: '<Facebook access token>' });
 
 example(users.UpdateMeBody, {
 	displayName: 'Alice',

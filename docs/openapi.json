@@ -345,7 +345,7 @@
 								],
 								"additionalProperties": false,
 								"example": {
-									"token": "N2Y4YjQ2ZjEtdmVyaWZ5LXRva2Vu"
+									"token": "<token from the verification mail>"
 								}
 							}
 						}
@@ -637,8 +637,8 @@
 									],
 									"additionalProperties": false,
 									"example": {
-										"accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyZjI5In0.signature",
-										"refreshToken": "q3J0b2tlbi1leGFtcGxlLXJlZnJlc2gtdG9rZW4",
+										"accessToken": "<access token, a JWT>",
+										"refreshToken": "<refresh token>",
 										"expiresIn": 900
 									}
 								}
@@ -826,7 +826,7 @@
 								],
 								"additionalProperties": false,
 								"example": {
-									"refreshToken": "q3J0b2tlbi1leGFtcGxlLXJlZnJlc2gtdG9rZW4"
+									"refreshToken": "<refresh token>"
 								}
 							}
 						}
@@ -860,8 +860,8 @@
 									],
 									"additionalProperties": false,
 									"example": {
-										"accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyZjI5In0.signature",
-										"refreshToken": "q3J0b2tlbi1leGFtcGxlLXJlZnJlc2gtdG9rZW4",
+										"accessToken": "<access token, a JWT>",
+										"refreshToken": "<refresh token>",
 										"expiresIn": 900
 									}
 								}
@@ -1011,7 +1011,7 @@
 								],
 								"additionalProperties": false,
 								"example": {
-									"refreshToken": "q3J0b2tlbi1leGFtcGxlLXJlZnJlc2gtdG9rZW4"
+									"refreshToken": "<refresh token>"
 								}
 							}
 						}
@@ -1279,7 +1279,7 @@
 								],
 								"additionalProperties": false,
 								"example": {
-									"token": "N2Y4YjQ2ZjEtcmVzZXQtdG9rZW4",
+									"token": "<token from the reset mail>",
 									"password": "newpass99"
 								}
 							}
@@ -15359,7 +15359,7 @@
 								],
 								"additionalProperties": false,
 								"example": {
-									"idToken": "eyJhbGciOiJSUzI1NiJ9.google-id-token.signature"
+									"idToken": "<Google id token>"
 								}
 							}
 						}
@@ -15393,8 +15393,8 @@
 									],
 									"additionalProperties": false,
 									"example": {
-										"accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyZjI5In0.signature",
-										"refreshToken": "q3J0b2tlbi1leGFtcGxlLXJlZnJlc2gtdG9rZW4",
+										"accessToken": "<access token, a JWT>",
+										"refreshToken": "<refresh token>",
 										"expiresIn": 900
 									}
 								}
@@ -15620,7 +15620,7 @@
 								],
 								"additionalProperties": false,
 								"example": {
-									"accessToken": "EAAGm0PX4ZCpsBA-facebook-access-token"
+									"accessToken": "<Facebook access token>"
 								}
 							}
 						}
@@ -15654,8 +15654,8 @@
 									],
 									"additionalProperties": false,
 									"example": {
-										"accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyZjI5In0.signature",
-										"refreshToken": "q3J0b2tlbi1leGFtcGxlLXJlZnJlc2gtdG9rZW4",
+										"accessToken": "<access token, a JWT>",
+										"refreshToken": "<refresh token>",
 										"expiresIn": 900
 									}
 								}
@@ -15881,7 +15881,7 @@
 								],
 								"additionalProperties": false,
 								"example": {
-									"idToken": "eyJhbGciOiJSUzI1NiJ9.google-id-token.signature"
+									"idToken": "<Google id token>"
 								}
 							}
 						}
@@ -16127,7 +16127,7 @@
 								],
 								"additionalProperties": false,
 								"example": {
-									"accessToken": "EAAGm0PX4ZCpsBA-facebook-access-token"
+									"accessToken": "<Facebook access token>"
 								}
 							}
 						}

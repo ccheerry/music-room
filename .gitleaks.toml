@@ -1,0 +1,7 @@
+# Secret scanning: default rules, minus the files that only hold documentation examples.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "API documentation examples"
+paths = ['''packages/shared/src/examples\.ts''', '''docs/openapi\.json''']
