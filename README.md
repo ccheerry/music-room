@@ -57,7 +57,7 @@ address can be changed from its settings.
 | **auth** | Sessions | 15-minute access JWT + refresh token rotated on every use; replaying an old one revokes the family |
 | **social** | Google / Facebook | The app gets a provider token, the back-end verifies it with the provider itself; linking never merges accounts silently |
 | **users** | Profile tiers | Public, friends-only and private fields filtered by one `viewProfile` function |
-| **users** | Music preferences | Genres and artists, used for discovery |
+| **users** | Music preferences | Genres picked from the catalog, shown on the profile |
 | **friends** | Requests | Send, accept, decline, remove; one row per pair |
 | **catalog** | Deezer proxy | Search and track lookup, validated, cached, throttled to the Deezer quota |
 | **events** | Track Vote | Suggest, vote, ranked queue computed `ORDER BY votes DESC, createdAt ASC` |
@@ -66,7 +66,7 @@ address can be changed from its settings.
 | **playlists** | Live editor | Add / move / remove by entry id, fractional positions, row lock per playlist |
 | **playlists** | Conflicts | Operation on a vanished entry → `409` with the current state |
 | **devices** | Delegation | Per-device grants to friends, commands relayed over Socket.IO, revoked instantly |
-| **realtime** | Rooms | One room per event, playlist, device and user; every message carries a `version` |
+| **realtime** | Rooms | One room per event, playlist, device and user; every state message carries a `version` |
 | **logs** | Action log | Every REST call and socket command stored with user, platform, device, app version |
 | **security** | Hardening | Rate limits, login backoff, helmet, CORS, zod on every input, authorization audit test |
 | **mobile** | Remote control | Expo Router screens, TanStack Query cache patched by socket events |
@@ -83,7 +83,7 @@ address can be changed from its settings.
 ### Build and run
 
 ```bash
-cp .env.example .env          # fill in the OAuth client ids
+cp .env.example .env          # OAuth client ids are optional
 make install                  # npm ci for every workspace
 docker compose up -d postgres mailpit
 make migrate seed             # schema + demo users, an event and a playlist
@@ -91,7 +91,12 @@ make dev                      # api in watch mode + Expo, scan the QR code
 ```
 
 API on `http://localhost:3000`, interactive docs on `http://localhost:3000/docs`,
-captured mails on `http://localhost:8025`.
+captured mails on `http://localhost:8025`. The same contract is in
+[`docs/openapi.json`](docs/openapi.json), the Socket.IO one in
+[`docs/API_REALTIME.md`](docs/API_REALTIME.md), the threat model in
+[`docs/SECURITY.md`](docs/SECURITY.md).
+
+`make install up` alone also works: the API container applies the migrations when it starts.
 
 ### A vote, end to end
 
@@ -133,7 +138,7 @@ existence is not revealed. Errors never carry stack traces.
 ### Load test
 
 ```bash
-make loadtest                 # vote · playlist · delegation · mixed → loadtest/reports/*.html
+make loadtest                 # vote · playlist · delegation · mixed → loadtest/reports/*.json
 ```
 
 Method and results — machine, concurrent users per service, latency
@@ -154,10 +159,10 @@ percentiles, bottleneck — are in [`docs/RAMP_UP.md`](docs/RAMP_UP.md).
 
 | Tool | Needed for | Notes |
 |------|------------|-------|
-| Node.js ≥ 20 + npm | Everything | Workspaces install every dependency from `package-lock.json` |
+| Node.js ≥ 22 + npm | Everything | Workspaces install every dependency from `package-lock.json` |
 | Docker + Compose | Postgres, Mailpit, API | `make up` |
 | `make` | Driving the build | Single entry point |
-| Android Studio / Xcode | Development build | Needed for native OAuth and BLE; Expo Go is enough for the rest |
+| Android Studio / Xcode | Development build | Needed for native OAuth and mail links; Expo Go is enough for the rest |
 | A phone or emulator | Running the app | Same network as the API, or set its URL in **Settings** |
 
 Nothing is vendored: every library is downloaded by `make install`.
@@ -167,17 +172,19 @@ Nothing is vendored: every library is downloaded by `make install`.
 ```bash
 make           # list every target (same as make help)
 make install   # install every workspace, build shared, generate the Prisma client
-make up        # start postgres, mailpit and the api in Docker
+make up        # start postgres, mailpit and the api in Docker (migrations applied on start)
 make down      # stop the Docker stack
 make dev       # api in watch mode + Expo
 make migrate   # apply Prisma migrations
 make seed      # load demo data
 make test      # shared, api and mobile test suites
+make coverage  # coverage of shared and api, fails under 80 %
+make audit     # npm audit of the API dependencies, no tracked .env file
 make lint      # eslint + prettier check + type check
 make format    # fix formatting
-make docs      # export openapi.json
+make docs      # export docs/openapi.json (database up)
 make mobile    # Expo dev server
-make loadtest  # Artillery scenarios
+make loadtest  # Artillery scenarios, reports in loadtest/reports
 make clean     # stop Docker and remove builds
 make fclean    # also remove volumes, local images and node_modules
 ```
@@ -226,7 +233,7 @@ music-room/
 │   │   ├── src/
 │   │   │   ├── app.ts                    # Builds the Fastify instance
 │   │   │   ├── server.ts                 # Listens
-│   │   │   ├── plugins/                  # auth, rate-limit, swagger, action-log, errors
+│   │   │   ├── plugins/                  # auth, swagger, action-log, errors
 │   │   │   └── modules/
 │   │   │       ├── auth/                 # register, login, refresh, mails
 │   │   │       ├── social/               # Google / Facebook sign-in and linking
@@ -252,7 +259,8 @@ music-room/
 │       └── test/                         # Component and unit tests
 │
 └── loadtest/
-    ├── seed.ts                           # Users, tokens, events, playlists
+    ├── common.yml                        # Target, phases, limits
+    ├── processor.cjs                     # Random picks per step
     ├── vote.yml                          # Track Vote under load
     ├── playlist.yml                      # Playlist Editor under load
     ├── delegation.yml                    # Control Delegation under load
@@ -319,13 +327,13 @@ refresh(R1) again ──> whole family revoked   (someone stole a token)
 </details>
 
 <details>
-<summary><strong>✨ Bonus</strong></summary>
+<summary><strong>✨ Planned extensions</strong></summary>
 
 <br>
 
-Started only once the mandatory part is complete.
+Planned extensions. None of them is implemented yet.
 
-| Bonus | What it does |
+| Extension | What it would do |
 |-------|--------------|
 | **Web responsive** | The same Expo code exported to the web, list + detail side by side on large screens |
 | **Free vs Paid** | Two offers; the Playlist Editor and location licenses need the paid one, one back-end guard decides |
@@ -362,7 +370,7 @@ Started only once the mandatory part is complete.
 
 - **Languages**: TypeScript (strict) everywhere
 - **Mobile**: React Native + Expo, Expo Router, TanStack Query, Zustand, expo-audio, expo-secure-store
-- **Back-end**: Node.js ≥ 20, Fastify, zod type provider, Socket.IO
+- **Back-end**: Node.js ≥ 22, Fastify, zod type provider, Socket.IO
 - **Database**: PostgreSQL 16 through Prisma; raw SQL only for row locks and partial indexes
 - **API**: REST, JSON, `/api/v1`, OpenAPI 3 at `/docs`; errors `{ error: { code, message } }`
 - **Auth**: argon2id, JWT access 15 min, refresh 30 days rotated, Google / Facebook verified server-side
@@ -374,8 +382,8 @@ Started only once the mandatory part is complete.
 
 ## 🔧 Requirements
 
-- Node.js 20 or later and npm
+- Node.js 22 or later and npm
 - Docker with Compose
 - `make`
-- A Google Cloud OAuth client and a Meta app for social login (ids in `.env`)
+- Optional: a Google Cloud OAuth client and a Meta app for social login (ids in `.env`)
 - An Android or iOS device / emulator; Android Studio or Xcode for the development build

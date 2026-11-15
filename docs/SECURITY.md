@@ -1,8 +1,8 @@
 # Security
 
 What the project protects against, how, and what is knowingly left open. Every protection
-named here is implemented in the code and covered by a test in `apps/api/test` or
-`apps/mobile/test`.
+named here is implemented in the code; most are covered by tests in `apps/api/test`
+(`security.test.ts`, `auth.test.ts`, `realtime.test.ts`, `devices.test.ts`).
 
 ## Model
 
@@ -27,14 +27,15 @@ named here is implemented in the code and covered by a test in `apps/api/test` o
 | Threat | Impact | Protection | Residual risk |
 |---|---|---|---|
 | Brute force on one account | Account takeover | Login backoff per email: locked after 5 failures in a row, 30 s doubling up to 15 min, also for unknown emails. argon2 makes each guess expensive | An attacker can keep a known email locked (15 min at a time). The counter is in memory: per API instance, reset on restart |
-| Credential stuffing (many emails, one source) | Takeover of accounts with reused passwords | Budget per address on login, sign-up, resend and forgot password (`AUTH_RATE_LIMIT_MAX`, 30 per 15 min) | Distributed sources are not stopped; no breached-password check |
-| Flooding the API | Slow or unavailable service | Global budget per user, per address when logged out (`RATE_LIMIT_MAX`, 300 per minute); 100 KB body limit; lists paginated (50 per page) or capped (500 rows) | In-memory counters, per instance. No protection below HTTP (SYN floods, slow connections): that belongs to a reverse proxy |
+| Credential stuffing (many emails, one source) | Takeover of accounts with reused passwords | Budget per address on each of login, sign-up, resend and forgot password (`AUTH_RATE_LIMIT_MAX`, 30 per 15 min and per route) | Distributed sources are not stopped; no breached-password check |
+| Flooding the API | Slow or unavailable service | Global budget per user, per address when logged out (`RATE_LIMIT_MAX`, 300 per minute); 100 KB body limit; lists paginated (50 per page) or capped (500 rows); at most 200 waiting tracks per event and 500 entries per playlist; the action log is written from a bounded buffer | In-memory counters, per instance. No protection below HTTP (SYN floods, slow connections): that belongs to a reverse proxy |
 | Session theft (stolen access token) | Acting as the user | 15 minute lifetime; never written to disk by the app | Valid until it expires, even after logout |
-| Refresh token replay | Long-lived stolen session | Rotation: a token is spent on use. Presenting a spent token revokes the whole session family. Password reset revokes every session | The thief wins if they use the token before the owner does; the owner is logged out at their next refresh, which exposes the theft |
-| Account enumeration | Knowing who has an account | Sign-up, resend and forgot password always answer 204; login answers the same error and costs one argon2 run whether the email exists or not; lockout applies to unknown emails too | Social sign-in answers `ACCOUNT_EXISTS` for an email already registered, after the provider has proved the caller owns it |
+| Refresh token replay | Long-lived stolen session | Rotation: a token is spent on use. Presenting a spent token revokes the whole session family. A password reset revokes every session, a password change every other device | The thief wins if they use the token before the owner does; the owner is logged out at their next refresh, which exposes the theft. A refresh whose answer is lost on a bad network has the same effect: the user logs in again |
+| Account enumeration | Knowing who has an account | Sign-up, resend and forgot password always answer 204 and do not wait for the mail to be sent; login answers the same error and costs one argon2 run whether the email exists or not; lockout applies to unknown emails too | Social sign-in answers `ACCOUNT_EXISTS` for an email already registered, after the provider has proved the caller owns it |
 | IDOR (asking for somebody else's resource by id) | Reading or changing other users' data | One authorization function per resource (`canView`, `voteRefusal`, `canEdit`, `canControl`, `viewProfile`). Private resources answer 404 to strangers. `security.test.ts` calls every route as a stranger and fails when a new route has no rule | Ids are random UUIDs, not secrets: protection relies on the checks only |
-| Stale access (rights removed during a live session) | Still receiving a private event, playlist or remote | Uninviting, making a resource private, revoking or letting a control grant expire removes the user's sockets from the room at once | None known |
-| Injection (SQL, NoSQL, header) | Data theft or corruption | Prisma parameterises every query; the one raw query is a tagged template with a bound parameter. zod validates every body, query, param, socket payload and external answer | None known |
+| Stale access (rights removed during a live session) | Still receiving a private event, playlist or remote | Uninviting, making a resource private, revoking or letting a control grant expire removes the user's sockets from the room at once | A socket opened before a logout or a device removal lives until its access token expires (15 min at most) |
+| Sign-up with somebody else's address | An account waiting with the intruder's password | Nothing works before the mail is confirmed; a later sign-up for the same unverified address replaces the password and cancels earlier links | The intruder can still make the service send a mail to that address (5 per 15 min) |
+| Injection (SQL, NoSQL, header) | Data theft or corruption | Prisma parameterises every query; the two raw queries (health check, playlist row lock) are tagged templates with bound parameters. zod validates every body, query, param, socket payload and external answer | None known |
 | Mass assignment | Setting fields that are not the caller's to set | Every body is a zod `strictObject`: unknown keys are refused; services pick the fields they store | None known |
 | Cross-site requests and embedding | A web page acting for a logged-in user | No cookies: the token travels in the `Authorization` header. CORS limited to `CORS_ORIGINS`. Security headers from `@fastify/helmet` (CSP, no framing, no sniffing) | The web build keeps the refresh token in `localStorage`, readable by an XSS in that page |
 | Socket flooding | Server or other clients overwhelmed | 20 events per second per socket, then the socket is dropped; 100 KB per message; token checked at the handshake and the socket closed when it expires; state broadcasts coalesced to one per 200 ms per event | Reconnecting gives a new budget; connections are not limited per address |
@@ -52,12 +53,13 @@ named here is implemented in the code and covered by a test in `apps/api/test` o
 
 Every HTTP request and socket event is stored in `ActionLog` with the user, device,
 platform, device model, app version, action and status. Passwords, tokens and bodies are
-never logged.
+never logged. Rows are stored in batches from a bounded buffer: under a flood the overflow is
+dropped and counted in the server log rather than exhausting memory.
 
 ## Production checklist
 
 - Terminate TLS in front of the API and forward only HTTPS / WSS.
-- Set `trustProxy` for that proxy so limits apply to the real client address.
+- Set `TRUST_PROXY=true` behind that proxy so limits apply to the real client address.
 - Use a long random `JWT_SECRET` (`openssl rand -base64 48`); rotate it to log everybody out.
 - Set `CORS_ORIGINS` to the real web origins only.
 - With several API instances, move the rate-limit, backoff and cache state to Redis.

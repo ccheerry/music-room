@@ -1,9 +1,10 @@
 # Realtime API (Socket.IO)
 
 The REST API is described in `docs/openapi.json` and served at `/docs`. This file covers
-what Swagger does not: the Socket.IO channel. Every payload below is a zod schema in
-`packages/shared/src` (`realtime.ts`, `events.ts`, `playlists.ts`, `devices.ts`), imported by
-both the API and the app.
+what Swagger does not: the Socket.IO channel. Payloads are defined once in
+`packages/shared/src` (`realtime.ts`, `events.ts`, `playlists.ts`, `devices.ts`) and imported by
+both the API and the app: zod schemas for everything a client sends and for the state
+messages, plain types for the three small notices.
 
 ## Principles
 
