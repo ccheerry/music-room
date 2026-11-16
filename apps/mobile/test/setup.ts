@@ -65,3 +65,17 @@ jest.mock('react-native-reorderable-list', () => {
 		useReorderableDrag: () => jest.fn(),
 	};
 });
+
+// Maps are native: a plain view that forwards presses with a coordinate.
+jest.mock('react-native-maps', () => {
+	const { View } = jest.requireActual('react-native');
+	const { Component, createElement } = jest.requireActual('react');
+	const Stub = (props: object) => createElement(View, props);
+	class MapView extends Component<object> {
+		animateToRegion = jest.fn();
+		render() {
+			return createElement(View, this.props);
+		}
+	}
+	return { __esModule: true, default: MapView, Marker: Stub, Circle: Stub };
+});

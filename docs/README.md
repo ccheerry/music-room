@@ -82,6 +82,7 @@ make install up seed
 | `EXPO_PUBLIC_API_URL` | Default backend URL of the app |
 | `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` / `_IOS_` / `_ANDROID_` | Google client ids used by the app |
 | `EXPO_PUBLIC_FACEBOOK_APP_ID` | Facebook app id used by the app |
+| `EXPO_PUBLIC_GOOGLE_MAPS_API_KEY` | Maps SDK for Android key for the event map; iOS uses Apple Maps and Expo Go ships its own key |
 
 Social login is optional: while the server variables are empty, `/auth/google` and `/auth/facebook` answer `503 SOCIAL_DISABLED`, and the app hides the buttons when its own ids are empty.
 
@@ -105,7 +106,7 @@ To open the app: run `make dev` (or `make mobile` when the API runs in Docker) a
 
 The app has five tabs:
 
-- **Events** (Music Track Vote): discover, invited and own events; create one, suggest tracks, vote, follow the ranked queue live. The owner's phone plays the current track; the server advances to the most voted track when a preview ends.
+- **Events** (Music Track Vote): discover, invited and own events; create one, suggest tracks, vote, follow the ranked queue live. A location event is placed by tapping a map (or from the phone's position) with its radius drawn around it. The owner's phone plays the current track; the server advances to the most voted track when a preview ends.
 - **Playlists** (Music Playlist Editor): own, shared and public playlists; add tracks, drag them to reorder (handle on the right) and swipe left to remove, while others do the same; screen readers get "move up", "move down" and "remove" actions; "Play in order" plays the playlist on this phone.
 - **Search**: Deezer search; tapping a result plays its 30 second preview in the mini player, which stays visible above the tabs.
 - **Control** (Music Control Delegation): devices this user may control, with a remote (play, pause, next, previous, volume) for each.
@@ -214,7 +215,7 @@ Details are in `docs/SECURITY.md`.
 
 ## Known limitations
 
-- The voting zone of a location event is placed at the phone's current position; there is no map picker.
+- The web build has no map: a location event is placed at the browser's current position.
 - Location checks trust the coordinates sent by the phone, which can be spoofed.
 - Rate limits, login backoff and catalog caches are kept in memory, per API instance.
 - Event playback timers and broadcast coalescing live in the API process; running several API instances needs a shared adapter (see the load test report).

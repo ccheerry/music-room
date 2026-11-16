@@ -15,6 +15,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { LICENSE_LABELS, VISIBILITY_LABELS } from '@/features/events/labels';
 import { currentCoords } from '@/features/events/location';
+import { mapAvailable, ZoneMap } from '@/features/events/zone-map';
 
 export type EventFormValues = {
 	name: string;
@@ -33,7 +34,6 @@ type EventFormProps = {
 const hoursOf = (zone: VoteZone) =>
 	Math.round(((Date.parse(zone.endsAt) - Date.parse(zone.startsAt)) / 3600000) * 100) / 100;
 
-// shortcut: the zone is placed at the phone's position (no map picker); add react-native-maps for remote placement.
 export function EventForm({ initial, submitLabel, onSubmit }: EventFormProps) {
 	const [name, setName] = useState(initial?.name ?? '');
 	const [visibility, setVisibility] = useState<Visibility>(initial?.visibility ?? 'PUBLIC');
@@ -109,8 +109,13 @@ export function EventForm({ initial, submitLabel, onSubmit }: EventFormProps) {
 					<ThemedText type="small" themeColor="textSecondary">
 						{place
 							? `Place: ${place.lat.toFixed(5)}, ${place.lng.toFixed(5)}`
-							: 'Stand at the venue and set the place from your position.'}
+							: mapAvailable
+								? 'Tap the map to place the venue, or use your position.'
+								: 'Stand at the venue and set the place from your position.'}
 					</ThemedText>
+					{mapAvailable && (
+						<ZoneMap place={place} radiusM={Number(radius) || 0} onChange={setPlace} />
+					)}
 					<Button label="Use my current position" variant="secondary" onPress={locate} />
 					<ThemedText type="smallBold">Radius (metres)</ThemedText>
 					<Input
