@@ -20,6 +20,17 @@ describe('GET /api/v1/health', () => {
 		expect(res.json()).toEqual({ status: 'ok', db: 'ok' });
 	});
 
+	it('adds process metrics only when asked with verbose', async () => {
+		const plain = await app.inject({ method: 'GET', url: '/api/v1/health' });
+		expect(plain.json().metrics).toBeUndefined();
+		const res = await app.inject({ method: 'GET', url: '/api/v1/health?verbose=true' });
+		expect(res.statusCode).toBe(200);
+		const { metrics } = res.json();
+		expect(metrics.rssMb).toBeGreaterThan(0);
+		expect(metrics.eventLoopDelayMs.p99).toBeGreaterThanOrEqual(0);
+		expect(metrics.dbConnections).toBeGreaterThan(0);
+	});
+
 	it('answers unknown routes with the error envelope', async () => {
 		const res = await app.inject({ method: 'GET', url: '/nope' });
 		expect(res.statusCode).toBe(404);

@@ -21,7 +21,24 @@
 				"tags": [
 					"health"
 				],
-				"description": "Public. 503 when the database does not answer.",
+				"description": "Public. 503 when the database does not answer. With `verbose=true` it adds process figures (memory, event-loop delay, database connections) used during load tests.",
+				"parameters": [
+					{
+						"schema": {
+							"type": "string",
+							"enum": [
+								"0",
+								"1",
+								"true",
+								"false",
+								""
+							]
+						},
+						"in": "query",
+						"name": "verbose",
+						"required": false
+					}
+				],
 				"responses": {
 					"200": {
 						"description": "Default Response",
@@ -42,6 +59,54 @@
 												"ok",
 												"down"
 											]
+										},
+										"metrics": {
+											"type": "object",
+											"properties": {
+												"uptimeS": {
+													"type": "number"
+												},
+												"rssMb": {
+													"type": "number"
+												},
+												"heapUsedMb": {
+													"type": "number"
+												},
+												"eventLoopDelayMs": {
+													"type": "object",
+													"properties": {
+														"p50": {
+															"type": "number"
+														},
+														"p99": {
+															"type": "number"
+														},
+														"max": {
+															"type": "number"
+														}
+													},
+													"required": [
+														"p50",
+														"p99",
+														"max"
+													],
+													"additionalProperties": false
+												},
+												"dbConnections": {
+													"nullable": true,
+													"type": "integer",
+													"minimum": -9007199254740991,
+													"maximum": 9007199254740991
+												}
+											},
+											"required": [
+												"uptimeS",
+												"rssMb",
+												"heapUsedMb",
+												"eventLoopDelayMs",
+												"dbConnections"
+											],
+											"additionalProperties": false
 										}
 									},
 									"required": [
@@ -153,6 +218,54 @@
 												"ok",
 												"down"
 											]
+										},
+										"metrics": {
+											"type": "object",
+											"properties": {
+												"uptimeS": {
+													"type": "number"
+												},
+												"rssMb": {
+													"type": "number"
+												},
+												"heapUsedMb": {
+													"type": "number"
+												},
+												"eventLoopDelayMs": {
+													"type": "object",
+													"properties": {
+														"p50": {
+															"type": "number"
+														},
+														"p99": {
+															"type": "number"
+														},
+														"max": {
+															"type": "number"
+														}
+													},
+													"required": [
+														"p50",
+														"p99",
+														"max"
+													],
+													"additionalProperties": false
+												},
+												"dbConnections": {
+													"nullable": true,
+													"type": "integer",
+													"minimum": -9007199254740991,
+													"maximum": 9007199254740991
+												}
+											},
+											"required": [
+												"uptimeS",
+												"rssMb",
+												"heapUsedMb",
+												"eventLoopDelayMs",
+												"dbConnections"
+											],
+											"additionalProperties": false
 										}
 									},
 									"required": [
