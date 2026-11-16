@@ -21,7 +21,7 @@
 				"tags": [
 					"health"
 				],
-				"description": "Public. 503 when the database does not answer. With `verbose=true` it adds process figures (memory, event-loop delay, database connections) used during load tests.",
+				"description": "Public. 503 when the database does not answer. With `verbose=true` it adds process figures used during load tests: memory, database connections and the event-loop delay since the previous verbose call.",
 				"parameters": [
 					{
 						"schema": {

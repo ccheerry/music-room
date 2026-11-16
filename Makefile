@@ -87,10 +87,11 @@ mobile-ios: ## Build and run the development build on an iPhone or simulator (ma
 # LOADTEST_RATE: new users per second at the end of the ramp (each stays about 35 s).
 LOADTEST_TARGET ?= http://localhost:3000
 LOADTEST_RATE ?= 20
+LOADTEST_SCENARIOS ?= vote playlist delegation mixed
 
 loadtest: ## Run the Artillery scenarios against LOADTEST_TARGET, reports in loadtest/reports
 	mkdir -p loadtest/reports
-	for s in vote playlist delegation mixed; do \
+	for s in $(LOADTEST_SCENARIOS); do \
 		(cd apps/api && $(LOAD_ENV) && npx tsx scripts/loadtest-seed.ts) || exit 1; \
 		node loadtest/monitor.mjs $(LOADTEST_TARGET) loadtest/reports/$$s.health.jsonl & monitor=$$!; \
 		LOADTEST_TARGET=$(LOADTEST_TARGET) LOADTEST_RATE=$(LOADTEST_RATE) npx artillery run \
