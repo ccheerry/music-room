@@ -7,6 +7,7 @@ import { errorMessage } from '@/api/errors';
 import { getFriends } from '@/api/users';
 import { Button } from '@/components/button';
 import { ListRow } from '@/components/list-row';
+import { QueryStatus } from '@/components/query-status';
 import { Screen } from '@/components/screen';
 import { Input } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
@@ -30,7 +31,13 @@ export default function DeviceScreen() {
 		action().catch((err) => setError(errorMessage(err)));
 	};
 
-	if (!device) return <Screen>{null}</Screen>;
+	if (!device) {
+		return (
+			<Screen>
+				<QueryStatus query={devices} isEmpty emptyText="This device is not in your list" />
+			</Screen>
+		);
+	}
 	const grants = new Map(device.grants.map((g) => [g.user.id, g]));
 
 	return (
@@ -56,9 +63,11 @@ export default function DeviceScreen() {
 				onChangeText={setHours}
 				inputMode="decimal"
 			/>
-			{friends.data?.length === 0 && (
-				<ThemedText themeColor="textSecondary">Add friends first</ThemedText>
-			)}
+			<QueryStatus
+				query={friends}
+				isEmpty={friends.data?.length === 0}
+				emptyText="Add friends first"
+			/>
 			{friends.data?.map((f) => {
 				const g = grants.get(f.id);
 				return (

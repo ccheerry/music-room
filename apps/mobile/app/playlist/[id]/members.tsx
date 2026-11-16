@@ -15,6 +15,7 @@ import { getFriends } from '@/api/users';
 import { Button } from '@/components/button';
 import { ListRow } from '@/components/list-row';
 import { Options } from '@/components/options';
+import { QueryStatus } from '@/components/query-status';
 import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
 import { EDIT_LABELS, VISIBILITY_LABELS } from '@/features/playlists/labels';
@@ -35,7 +36,13 @@ export default function PlaylistMembersScreen() {
 
 	const p = playlist.data;
 	const memberIds = new Set(members.data?.map((m) => m.id));
-	if (!p) return <Screen>{null}</Screen>;
+	if (!p) {
+		return (
+			<Screen>
+				<QueryStatus query={playlist} />
+			</Screen>
+		);
+	}
 
 	if (!p.isOwner) {
 		return (
@@ -43,9 +50,11 @@ export default function PlaylistMembersScreen() {
 				{members.data?.map((m) => (
 					<ListRow key={m.id} title={m.displayName} />
 				))}
-				{members.data?.length === 0 && (
-					<ThemedText themeColor="textSecondary">No invited members</ThemedText>
-				)}
+				<QueryStatus
+					query={members}
+					isEmpty={members.data?.length === 0}
+					emptyText="No invited members"
+				/>
 			</Screen>
 		);
 	}
@@ -65,9 +74,11 @@ export default function PlaylistMembersScreen() {
 				onChange={(editLicense) => run(() => updatePlaylist(id, { editLicense }))}
 			/>
 			<ThemedText type="smallBold">Invite friends</ThemedText>
-			{friends.data?.length === 0 && (
-				<ThemedText themeColor="textSecondary">Add friends to invite them</ThemedText>
-			)}
+			<QueryStatus
+				query={friends}
+				isEmpty={friends.data?.length === 0}
+				emptyText="Add friends to invite them"
+			/>
 			{friends.data?.map((f) => {
 				const on = memberIds.has(f.id);
 				return (

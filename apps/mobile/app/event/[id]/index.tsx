@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { errorMessage } from '@/api/errors';
 import { eventKeys, getEvent, getEventState, skipTrack, unvote, vote } from '@/api/events';
 import { Button } from '@/components/button';
+import { QueryStatus } from '@/components/query-status';
 import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
 import { EventQueue } from '@/features/events/event-queue';
@@ -54,10 +55,10 @@ export default function EventScreen() {
 				: vote(id, entry.id, needsCoords ? await currentCoords() : undefined),
 		);
 
-	if (event.isError) {
+	if (!event.data) {
 		return (
 			<Screen>
-				<ThemedText themeColor="danger">{errorMessage(event.error)}</ThemedText>
+				<QueryStatus query={event} />
 			</Screen>
 		);
 	}

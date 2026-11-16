@@ -3,13 +3,20 @@ import { router, useLocalSearchParams } from 'expo-router';
 
 import { deleteEvent, eventKeys, getEvent, updateEvent } from '@/api/events';
 import { Button } from '@/components/button';
+import { QueryStatus } from '@/components/query-status';
 import { Screen } from '@/components/screen';
 import { EventForm } from '@/features/events/event-form';
 
 export default function EditEventScreen() {
 	const { id } = useLocalSearchParams<{ id: string }>();
 	const event = useQuery({ queryKey: eventKeys.detail(id), queryFn: () => getEvent(id) });
-	if (!event.data) return <Screen>{null}</Screen>;
+	if (!event.data) {
+		return (
+			<Screen>
+				<QueryStatus query={event} />
+			</Screen>
+		);
+	}
 	return (
 		<Screen>
 			<EventForm

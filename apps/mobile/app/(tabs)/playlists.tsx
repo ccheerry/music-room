@@ -3,14 +3,13 @@ import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useState } from 'react';
 
-import { errorMessage } from '@/api/errors';
 import { listPlaylists, playlistKeys } from '@/api/playlists';
 import { Button } from '@/components/button';
 import { Chips } from '@/components/chips';
 import { ListRow } from '@/components/list-row';
+import { QueryStatus } from '@/components/query-status';
 import { Screen } from '@/components/screen';
 import { Input } from '@/components/text-field';
-import { ThemedText } from '@/components/themed-text';
 import { useDebounced } from '@/hooks/use-debounced';
 
 const SCOPES: Record<string, PlaylistScope> = {
@@ -43,12 +42,11 @@ export default function PlaylistsScreen() {
 				value={query}
 				onChangeText={setQuery}
 			/>
-			{list.isError && (
-				<ThemedText themeColor="danger">{errorMessage(list.error)}</ThemedText>
-			)}
-			{list.data?.items.length === 0 && (
-				<ThemedText themeColor="textSecondary">No playlists here yet</ThemedText>
-			)}
+			<QueryStatus
+				query={list}
+				isEmpty={list.data?.items.length === 0}
+				emptyText="No playlists here yet"
+			/>
 			{list.data?.items.map((p) => (
 				<ListRow
 					key={p.id}

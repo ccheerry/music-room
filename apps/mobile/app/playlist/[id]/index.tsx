@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { errorMessage } from '@/api/errors';
 import { editPlaylist, getEntries, getPlaylist, playlistKeys } from '@/api/playlists';
 import { Button } from '@/components/button';
+import { QueryStatus } from '@/components/query-status';
 import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
 import type { PlaylistOp } from '@/features/playlists/apply-op';
@@ -50,10 +51,10 @@ export default function PlaylistScreen() {
 
 	const p = playlist.data;
 	const list = entries.data?.entries ?? [];
-	if (playlist.isError) {
+	if (!p) {
 		return (
 			<Screen>
-				<ThemedText themeColor="danger">{errorMessage(playlist.error)}</ThemedText>
+				<QueryStatus query={playlist} />
 			</Screen>
 		);
 	}

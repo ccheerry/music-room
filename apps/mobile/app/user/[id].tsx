@@ -1,10 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { Stack, useLocalSearchParams } from 'expo-router';
 
-import { errorMessage } from '@/api/errors';
 import { getUser } from '@/api/users';
+import { QueryStatus } from '@/components/query-status';
 import { Screen } from '@/components/screen';
-import { ThemedText } from '@/components/themed-text';
 import { UserView } from '@/features/profile/user-view';
 
 export default function UserScreen() {
@@ -13,9 +12,7 @@ export default function UserScreen() {
 	return (
 		<Screen>
 			<Stack.Screen options={{ title: user.data?.displayName ?? 'Profile' }} />
-			{user.isError && (
-				<ThemedText themeColor="danger">{errorMessage(user.error)}</ThemedText>
-			)}
+			<QueryStatus query={user} />
 			{user.data && <UserView user={user.data} />}
 		</Screen>
 	);

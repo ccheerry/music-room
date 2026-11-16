@@ -2,8 +2,8 @@ import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 
 import { deviceKeys, getMyDevices } from '@/api/devices';
-import { errorMessage } from '@/api/errors';
 import { ListRow } from '@/components/list-row';
+import { QueryStatus } from '@/components/query-status';
 import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
 
@@ -14,9 +14,11 @@ export default function DevicesScreen() {
 			<ThemedText themeColor="textSecondary">
 				Choose which friends may control the music on each of your devices.
 			</ThemedText>
-			{devices.isError && (
-				<ThemedText themeColor="danger">{errorMessage(devices.error)}</ThemedText>
-			)}
+			<QueryStatus
+				query={devices}
+				isEmpty={devices.data?.length === 0}
+				emptyText="No devices yet"
+			/>
 			{devices.data?.map((d) => (
 				<ListRow
 					key={d.id}

@@ -7,6 +7,7 @@ import { eventKeys, getInvites, setInvited } from '@/api/events';
 import { getFriends } from '@/api/users';
 import { Button } from '@/components/button';
 import { ListRow } from '@/components/list-row';
+import { QueryStatus } from '@/components/query-status';
 import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
 
@@ -20,9 +21,11 @@ export default function InviteScreen() {
 	return (
 		<Screen>
 			{error && <ThemedText themeColor="danger">{error}</ThemedText>}
-			{friends.data?.length === 0 && (
-				<ThemedText themeColor="textSecondary">Add friends to invite them</ThemedText>
-			)}
+			<QueryStatus
+				query={friends}
+				isEmpty={friends.data?.length === 0}
+				emptyText="Add friends to invite them"
+			/>
 			{friends.data?.map((f) => {
 				const on = invited.has(f.id);
 				return (

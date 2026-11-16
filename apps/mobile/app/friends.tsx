@@ -13,6 +13,7 @@ import {
 } from '@/api/users';
 import { Button } from '@/components/button';
 import { ListRow } from '@/components/list-row';
+import { QueryStatus } from '@/components/query-status';
 import { Screen } from '@/components/screen';
 import { Input } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
@@ -55,8 +56,12 @@ export default function FriendsScreen() {
 						onPress={() => openUser(user)}
 					/>
 				))}
-			{q.length > 0 && search.data?.items.length === 0 && (
-				<ThemedText themeColor="textSecondary">Nobody found</ThemedText>
+			{q.length > 0 && (
+				<QueryStatus
+					query={search}
+					isEmpty={search.data?.items.length === 0}
+					emptyText="Nobody found"
+				/>
 			)}
 			{error && <ThemedText themeColor="danger">{error}</ThemedText>}
 
@@ -83,11 +88,11 @@ export default function FriendsScreen() {
 			))}
 
 			<ThemedText type="smallBold">Friends</ThemedText>
-			{friends.data?.length === 0 && (
-				<ThemedText themeColor="textSecondary">
-					No friends yet. Search people above.
-				</ThemedText>
-			)}
+			<QueryStatus
+				query={friends}
+				isEmpty={friends.data?.length === 0}
+				emptyText="No friends yet. Search people above."
+			/>
 			{friends.data?.map((user) => (
 				<ListRow key={user.id} title={user.displayName} onPress={() => openUser(user)} />
 			))}

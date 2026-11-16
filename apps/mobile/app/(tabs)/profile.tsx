@@ -2,8 +2,8 @@ import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 
 import { getMe, logOut } from '@/api/auth';
-import { errorMessage } from '@/api/errors';
 import { Button } from '@/components/button';
+import { QueryStatus } from '@/components/query-status';
 import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
 import { ProfileForm } from '@/features/profile/profile-form';
@@ -39,9 +39,7 @@ export default function ProfileScreen() {
 		return (
 			<Screen>
 				<Account />
-				{me.isError && (
-					<ThemedText themeColor="danger">{errorMessage(me.error)}</ThemedText>
-				)}
+				<QueryStatus query={me} />
 			</Screen>
 		);
 	}

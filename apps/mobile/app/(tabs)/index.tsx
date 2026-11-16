@@ -3,14 +3,13 @@ import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useState } from 'react';
 
-import { errorMessage } from '@/api/errors';
 import { eventKeys, listEvents } from '@/api/events';
 import { Button } from '@/components/button';
 import { Chips } from '@/components/chips';
 import { ListRow } from '@/components/list-row';
+import { QueryStatus } from '@/components/query-status';
 import { Screen } from '@/components/screen';
 import { Input } from '@/components/text-field';
-import { ThemedText } from '@/components/themed-text';
 import { useDebounced } from '@/hooks/use-debounced';
 
 const SCOPES: Record<string, EventScope> = {
@@ -43,12 +42,11 @@ export default function EventsScreen() {
 				value={query}
 				onChangeText={setQuery}
 			/>
-			{events.isError && (
-				<ThemedText themeColor="danger">{errorMessage(events.error)}</ThemedText>
-			)}
-			{events.data?.items.length === 0 && (
-				<ThemedText themeColor="textSecondary">No events here yet</ThemedText>
-			)}
+			<QueryStatus
+				query={events}
+				isEmpty={events.data?.items.length === 0}
+				emptyText="No events here yet"
+			/>
 			{events.data?.items.map((e) => (
 				<ListRow
 					key={e.id}

@@ -7,6 +7,7 @@ import { getMe } from '@/api/auth';
 import { errorMessage } from '@/api/errors';
 import { linkProvider, unlinkProvider } from '@/api/social';
 import { Button } from '@/components/button';
+import { QueryStatus } from '@/components/query-status';
 import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
@@ -34,9 +35,7 @@ export default function LinkedAccountsScreen() {
 	if (!me.data) {
 		return (
 			<Screen>
-				{me.isError && (
-					<ThemedText themeColor="danger">{errorMessage(me.error)}</ThemedText>
-				)}
+				<QueryStatus query={me} />
 			</Screen>
 		);
 	}
