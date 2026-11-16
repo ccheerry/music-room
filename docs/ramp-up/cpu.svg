@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 400" width="720" height="400" font-family="Helvetica, Arial, sans-serif" font-size="12">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="70" y="24" font-size="15" font-weight="bold" fill="#111">API process CPU by number of users (100 % = one core)</text>
+<line x1="70.0" y1="40" x2="70.0" y2="340" stroke="#eee"/>
+<text x="70.0" y="358" text-anchor="middle" fill="#555">0</text>
+<line x1="146.66666666666669" y1="40" x2="146.66666666666669" y2="340" stroke="#eee"/>
+<text x="146.66666666666669" y="358" text-anchor="middle" fill="#555">500</text>
+<line x1="223.33333333333334" y1="40" x2="223.33333333333334" y2="340" stroke="#eee"/>
+<text x="223.33333333333334" y="358" text-anchor="middle" fill="#555">1000</text>
+<line x1="300.0" y1="40" x2="300.0" y2="340" stroke="#eee"/>
+<text x="300.0" y="358" text-anchor="middle" fill="#555">1500</text>
+<line x1="376.6666666666667" y1="40" x2="376.6666666666667" y2="340" stroke="#eee"/>
+<text x="376.6666666666667" y="358" text-anchor="middle" fill="#555">2000</text>
+<line x1="453.3333333333333" y1="40" x2="453.3333333333333" y2="340" stroke="#eee"/>
+<text x="453.3333333333333" y="358" text-anchor="middle" fill="#555">2500</text>
+<line x1="530.0" y1="40" x2="530.0" y2="340" stroke="#eee"/>
+<text x="530.0" y="358" text-anchor="middle" fill="#555">3000</text>
+<text x="300.0" y="385" text-anchor="middle" fill="#333">Users at once</text>
+<line x1="70" y1="340.0" x2="530" y2="340.0" stroke="#eee"/>
+<text x="62" y="344.0" text-anchor="end" fill="#555">0 %</text>
+<line x1="70" y1="290.0" x2="530" y2="290.0" stroke="#eee"/>
+<text x="62" y="294.0" text-anchor="end" fill="#555">20 %</text>
+<line x1="70" y1="240.00000000000003" x2="530" y2="240.00000000000003" stroke="#eee"/>
+<text x="62" y="244.00000000000003" text-anchor="end" fill="#555">40 %</text>
+<line x1="70" y1="190.0" x2="530" y2="190.0" stroke="#eee"/>
+<text x="62" y="194.0" text-anchor="end" fill="#555">60 %</text>
+<line x1="70" y1="140.0" x2="530" y2="140.0" stroke="#eee"/>
+<text x="62" y="144.0" text-anchor="end" fill="#555">80 %</text>
+<line x1="70" y1="89.99999999999999" x2="530" y2="89.99999999999999" stroke="#eee"/>
+<text x="62" y="93.99999999999999" text-anchor="end" fill="#555">100 %</text>
+<line x1="70" y1="40.0" x2="530" y2="40.0" stroke="#eee"/>
+<text x="62" y="44.0" text-anchor="end" fill="#555">120 %</text>
+<line x1="70" y1="89.99999999999999" x2="530" y2="89.99999999999999" stroke="#dc2626" stroke-dasharray="6 4"/>
+<text x="76" y="83.99999999999999" fill="#dc2626">one core</text>
+<polyline points="109.9,227.5 129.0,150.0 151.3,87.5 204.9,60.0" fill="none" stroke="#2563eb" stroke-width="2.5"/>
+<circle cx="109.9" cy="227.5" r="4" fill="#2563eb"/>
+<circle cx="129.0" cy="150.0" r="4" fill="#2563eb"/>
+<circle cx="151.3" cy="87.5" r="4" fill="#2563eb"/>
+<circle cx="204.9" cy="60.0" r="4" fill="#2563eb"/>
+<polyline points="88.4,212.5 107.6,132.5" fill="none" stroke="#d97706" stroke-width="2.5"/>
+<circle cx="88.4" cy="212.5" r="4" fill="#d97706"/>
+<circle cx="107.6" cy="132.5" r="4" fill="#d97706"/>
+<polyline points="168.1,265.0 266.3,200.0 364.4,155.0 499.3,75.0" fill="none" stroke="#059669" stroke-width="2.5"/>
+<circle cx="168.1" cy="265.0" r="4" fill="#059669"/>
+<circle cx="266.3" cy="200.0" r="4" fill="#059669"/>
+<circle cx="364.4" cy="155.0" r="4" fill="#059669"/>
+<circle cx="499.3" cy="75.0" r="4" fill="#059669"/>
+<polyline points="108.3,172.5 143.6,100.0" fill="none" stroke="#9333ea" stroke-width="2.5"/>
+<circle cx="108.3" cy="172.5" r="4" fill="#9333ea"/>
+<circle cx="143.6" cy="100.0" r="4" fill="#9333ea"/>
+<line x1="550" y1="50" x2="574" y2="50" stroke="#2563eb" stroke-width="3"/>
+<text x="580" y="54" fill="#222">Track Vote</text>
+<line x1="550" y1="72" x2="574" y2="72" stroke="#d97706" stroke-width="3"/>
+<text x="580" y="76" fill="#222">Playlist Editor</text>
+<line x1="550" y1="94" x2="574" y2="94" stroke="#059669" stroke-width="3"/>
+<text x="580" y="98" fill="#222">Control Delegation</text>
+<line x1="550" y1="116" x2="574" y2="116" stroke="#9333ea" stroke-width="3"/>
+<text x="580" y="120" fill="#222">Mixed use</text>
+</svg>

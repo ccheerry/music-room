@@ -29,6 +29,18 @@ export default tseslint.config(
 		languageOptions: { globals: { require: 'readonly', module: 'writable' } },
 		rules: { '@typescript-eslint/no-require-imports': 'off' },
 	},
+	// Node scripts around the load tests.
+	{
+		files: ['loadtest/**/*.mjs'],
+		languageOptions: {
+			globals: {
+				process: 'readonly',
+				fetch: 'readonly',
+				AbortSignal: 'readonly',
+				setInterval: 'readonly',
+			},
+		},
+	},
 	// Scripts run by Maestro, which provides these names.
 	{
 		files: ['apps/mobile/.maestro/**/*.js'],

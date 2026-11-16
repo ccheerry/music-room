@@ -12,6 +12,7 @@ Everything ran on one machine: the API, the database and the load generator.
 | Type | On premise, a laptop on mains power, performance power profile |
 | CPU | Intel Core i5-13500H, 16 threads |
 | RAM | 15 GiB |
+| Disk | 512 GB NVMe SSD (Micron MTFDKCD512TFK) |
 | OS | Linux 6.18 (x86_64), Docker 29.9 |
 | API | One Node.js 22 process in a container (`make up`, `NODE_ENV=production`, built JavaScript) |
 | Database | PostgreSQL 16.15 in a container, default settings (`max_connections` 100, `shared_buffers` 128 MB) |
@@ -53,6 +54,13 @@ the same server would do with the load coming from elsewhere.
 ## Results
 
 Response times in milliseconds. "Users at once" is the plateau, `rate x session length`.
+
+![p95 response time by number of users](ramp-up/p95.svg)
+
+![API process CPU by number of users](ramp-up/cpu.svg)
+
+A run is "pass" when the p95 stays under 500 ms and fewer than 1 % of the users fail (see
+Method); the failing runs say what failed.
 
 ### Music Track Vote (one event)
 

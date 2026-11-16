@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 400" width="720" height="400" font-family="Helvetica, Arial, sans-serif" font-size="12">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="70" y="24" font-size="15" font-weight="bold" fill="#111">p95 response time by number of users (log scale)</text>
+<line x1="70.0" y1="40" x2="70.0" y2="340" stroke="#eee"/>
+<text x="70.0" y="358" text-anchor="middle" fill="#555">0</text>
+<line x1="146.66666666666669" y1="40" x2="146.66666666666669" y2="340" stroke="#eee"/>
+<text x="146.66666666666669" y="358" text-anchor="middle" fill="#555">500</text>
+<line x1="223.33333333333334" y1="40" x2="223.33333333333334" y2="340" stroke="#eee"/>
+<text x="223.33333333333334" y="358" text-anchor="middle" fill="#555">1000</text>
+<line x1="300.0" y1="40" x2="300.0" y2="340" stroke="#eee"/>
+<text x="300.0" y="358" text-anchor="middle" fill="#555">1500</text>
+<line x1="376.6666666666667" y1="40" x2="376.6666666666667" y2="340" stroke="#eee"/>
+<text x="376.6666666666667" y="358" text-anchor="middle" fill="#555">2000</text>
+<line x1="453.3333333333333" y1="40" x2="453.3333333333333" y2="340" stroke="#eee"/>
+<text x="453.3333333333333" y="358" text-anchor="middle" fill="#555">2500</text>
+<line x1="530.0" y1="40" x2="530.0" y2="340" stroke="#eee"/>
+<text x="530.0" y="358" text-anchor="middle" fill="#555">3000</text>
+<text x="300.0" y="385" text-anchor="middle" fill="#333">Users at once</text>
+<line x1="70" y1="340.0" x2="530" y2="340.0" stroke="#eee"/>
+<text x="62" y="344.0" text-anchor="end" fill="#555">1 ms</text>
+<line x1="70" y1="265.0" x2="530" y2="265.0" stroke="#eee"/>
+<text x="62" y="269.0" text-anchor="end" fill="#555">10 ms</text>
+<line x1="70" y1="190.0" x2="530" y2="190.0" stroke="#eee"/>
+<text x="62" y="194.0" text-anchor="end" fill="#555">100 ms</text>
+<line x1="70" y1="115.0" x2="530" y2="115.0" stroke="#eee"/>
+<text x="62" y="119.0" text-anchor="end" fill="#555">1000 ms</text>
+<line x1="70" y1="40.0" x2="530" y2="40.0" stroke="#eee"/>
+<text x="62" y="44.0" text-anchor="end" fill="#555">10000 ms</text>
+<line x1="70" y1="137.5772496747986" x2="530" y2="137.5772496747986" stroke="#dc2626" stroke-dasharray="6 4"/>
+<text x="526" y="131.5772496747986" text-anchor="end" fill="#dc2626">limit 500 ms</text>
+<polyline points="109.9,232.6 129.0,222.4 151.3,174.3 204.9,84.9" fill="none" stroke="#2563eb" stroke-width="2.5"/>
+<circle cx="109.9" cy="232.6" r="4" fill="#2563eb"/>
+<circle cx="129.0" cy="222.4" r="4" fill="#2563eb"/>
+<circle cx="151.3" cy="174.3" r="4" fill="#2563eb"/>
+<circle cx="204.9" cy="84.9" r="4" fill="#2563eb"/>
+<polyline points="88.4,207.2 107.6,78.4" fill="none" stroke="#d97706" stroke-width="2.5"/>
+<circle cx="88.4" cy="207.2" r="4" fill="#d97706"/>
+<circle cx="107.6" cy="78.4" r="4" fill="#d97706"/>
+<polyline points="168.1,272.3 266.3,261.9 364.4,256.5 499.3,60.2" fill="none" stroke="#059669" stroke-width="2.5"/>
+<circle cx="168.1" cy="272.3" r="4" fill="#059669"/>
+<circle cx="266.3" cy="261.9" r="4" fill="#059669"/>
+<circle cx="364.4" cy="256.5" r="4" fill="#059669"/>
+<circle cx="499.3" cy="60.2" r="4" fill="#059669"/>
+<polyline points="108.3,212.6 143.6,82.3" fill="none" stroke="#9333ea" stroke-width="2.5"/>
+<circle cx="108.3" cy="212.6" r="4" fill="#9333ea"/>
+<circle cx="143.6" cy="82.3" r="4" fill="#9333ea"/>
+<line x1="550" y1="50" x2="574" y2="50" stroke="#2563eb" stroke-width="3"/>
+<text x="580" y="54" fill="#222">Track Vote</text>
+<line x1="550" y1="72" x2="574" y2="72" stroke="#d97706" stroke-width="3"/>
+<text x="580" y="76" fill="#222">Playlist Editor</text>
+<line x1="550" y1="94" x2="574" y2="94" stroke="#059669" stroke-width="3"/>
+<text x="580" y="98" fill="#222">Control Delegation</text>
+<line x1="550" y1="116" x2="574" y2="116" stroke="#9333ea" stroke-width="3"/>
+<text x="580" y="120" fill="#222">Mixed use</text>
+</svg>
