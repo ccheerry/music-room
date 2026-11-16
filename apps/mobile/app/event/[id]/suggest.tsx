@@ -1,7 +1,7 @@
 import type { Track } from '@music-room/shared';
 import { useQuery } from '@tanstack/react-query';
-import { router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { router, useLocalSearchParams, useNavigation } from 'expo-router';
+import { useRef, useState } from 'react';
 
 import { errorMessage } from '@/api/errors';
 import { eventKeys, getEvent, suggestTrack } from '@/api/events';
@@ -14,8 +14,13 @@ export default function SuggestScreen() {
 	const { id } = useLocalSearchParams<{ id: string }>();
 	const event = useQuery({ queryKey: eventKeys.detail(id), queryFn: () => getEvent(id) });
 	const [error, setError] = useState<string | null>(null);
+	const navigation = useNavigation();
+	const busy = useRef(false);
 
 	const pick = async (track: Track) => {
+		// One suggestion per visit: a second tap while the first is in flight would pop twice.
+		if (busy.current) return;
+		busy.current = true;
 		setError(null);
 		try {
 			const coords =
@@ -23,9 +28,12 @@ export default function SuggestScreen() {
 					? await currentCoords()
 					: undefined;
 			await suggestTrack(id, track.id, coords);
-			router.back();
+			// The user may have left already (header back) or opened this screen without history.
+			if (navigation.isFocused() && router.canGoBack()) router.back();
 		} catch (err) {
 			setError(errorMessage(err));
+		} finally {
+			busy.current = false;
 		}
 	};
 
