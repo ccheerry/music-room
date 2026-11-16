@@ -119,7 +119,20 @@ Every feature except two works in Expo Go. Social login and the links in mails (
 The development build is the app compiled with its own id, `com.musicroom.app`, and the URL schemes the OAuth providers redirect to (`com.musicroom.app:/oauthredirect` for Google, `fb<app id>://authorize` for Facebook). The native projects are generated from `apps/mobile/app.json` and `apps/mobile/app.config.ts` and are not committed.
 
 - Android: Android SDK with `ANDROID_HOME` set, then `make mobile-android` with a phone in USB debugging or an emulator running. It builds, installs and starts Metro.
-- iOS: macOS with Xcode, then `make mobile-ios` with the iPhone plugged in. A free Apple ID is enough to run it on your own iPhone.
+- iOS on macOS: Xcode, then `make mobile-ios` with the iPhone plugged in. A free Apple ID is enough to run it on your own iPhone.
+- iOS without a Mac: EAS Build compiles it in the cloud (`apps/mobile/eas.json`, profile `development`) and needs an Apple Developer account. Only the `EXPO_PUBLIC_` values are sent to EAS, never the server secrets:
+
+  ```bash
+  cd apps/mobile
+  npx eas-cli login
+  npx eas-cli init                      # links the project to the Expo account
+  npx eas-cli device:create             # register the iPhone: open the link on it
+  grep '^EXPO_PUBLIC_' ../../.env > /tmp/eas.env
+  npx eas-cli env:push --environment development --path /tmp/eas.env
+  npx eas-cli build --profile development --platform ios
+  ```
+
+  Install the build from the link EAS prints, then run `make mobile-dev` and open the app: it finds the dev server on the same network.
 
 Registering the build with the providers:
 
@@ -149,6 +162,7 @@ make lint      # eslint + prettier check + type check
 make format    # fix formatting
 make docs      # export docs/openapi.json (database up)
 make mobile          # Expo dev server for Expo Go
+make mobile-dev      # Expo dev server for an installed development build
 make mobile-android  # development build on an Android device or emulator
 make mobile-ios      # development build on an iPhone (macOS + Xcode)
 make loadtest  # Artillery scenarios, reports in loadtest/reports

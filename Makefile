@@ -75,6 +75,9 @@ docs: ## Export docs/openapi.json (needs the database up)
 mobile: ## Start the Expo dev server for Expo Go (no social login, see docs)
 	$(ROOT_ENV) && npm -w @music-room/mobile run start
 
+mobile-dev: ## Start the Expo dev server for an installed development build
+	$(ROOT_ENV) && npm -w @music-room/mobile run start:dev
+
 mobile-android: ## Build and run the development build on an Android device or emulator
 	$(ROOT_ENV) && cd apps/mobile && npx expo run:android
 
@@ -105,4 +108,4 @@ fclean: clean ## Also remove volumes, local images and node_modules
 	docker compose down -v --rmi local
 	rm -rf node_modules apps/*/node_modules packages/*/node_modules
 
-.PHONY: help install setup up down dev migrate seed test coverage audit lint format docs mobile mobile-android mobile-ios loadtest clean fclean
+.PHONY: help install setup up down dev migrate seed test coverage audit lint format docs mobile mobile-dev mobile-android mobile-ios loadtest clean fclean
