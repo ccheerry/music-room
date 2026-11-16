@@ -15,7 +15,7 @@ import { LIST_CAP } from '../../lib/limits.js';
 import type { Event, Prisma } from '../../generated/prisma/client.js';
 import { httpError } from '../../plugins/errors.js';
 import { isUniqueViolation } from '../auth/service.js';
-import { isInvited, loadOwned, loadVisible, voteRefusal } from './access.js';
+import { canSkip, isInvited, loadOwned, loadVisible, voteRefusal } from './access.js';
 
 const owner = { select: { id: true, displayName: true } } as const;
 type EventWithOwner = Event & { owner: UserSummary };
@@ -107,6 +107,7 @@ export function createEventsService({
 			...summary(withOwner, userId, await isInvited(prisma, eventId, userId)),
 			zone: zoneOf(event),
 			canVote: refusal === null || locationOnly,
+			canSkip: await canSkip(prisma, event, userId),
 		};
 	}
 

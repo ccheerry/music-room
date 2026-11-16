@@ -79,6 +79,8 @@ export const EventDetail = EventSummary.extend({
 	zone: VoteZone.nullable(),
 	// License check without the location part; LOCATION events still need coordinates.
 	canVote: z.boolean(),
+	// Owner, or a friend allowed to control one of the owner's devices.
+	canSkip: z.boolean(),
 });
 export type EventDetail = z.infer<typeof EventDetail>;
 

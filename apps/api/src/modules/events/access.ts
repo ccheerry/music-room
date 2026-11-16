@@ -57,6 +57,27 @@ export async function loadVisible(prisma: PrismaClient, eventId: string, userId:
 	return event;
 }
 
+// Skipping a track is part of controlling the owner's music, so it follows device grants.
+export async function canSkip(prisma: PrismaClient, event: Event, userId: string) {
+	if (event.ownerId === userId) return true;
+	const grant = await prisma.controlGrant.findFirst({
+		where: {
+			granteeId: userId,
+			device: { userId: event.ownerId },
+			OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+		},
+	});
+	return grant !== null;
+}
+
+export async function loadSkippable(prisma: PrismaClient, eventId: string, userId: string) {
+	const event = await loadVisible(prisma, eventId, userId);
+	if (!(await canSkip(prisma, event, userId))) {
+		throw httpError(403, 'FORBIDDEN', 'Only the owner and their delegates can skip');
+	}
+	return event;
+}
+
 export async function loadOwned(prisma: PrismaClient, eventId: string, userId: string) {
 	const event = await loadVisible(prisma, eventId, userId);
 	if (event.ownerId !== userId) {

@@ -219,7 +219,7 @@ Details are in `docs/SECURITY.md`.
 - Location checks trust the coordinates sent by the phone, which can be spoofed.
 - Rate limits, login backoff and catalog caches are kept in memory, per API instance.
 - Event playback timers and broadcast coalescing live in the API process; running several API instances needs a shared adapter (see the load test report).
-- Only the owner of an event can skip a track, and only the owner's phone plays the event audio.
+- Only the owner's phone plays the event audio. The owner and friends they let control one of their devices can skip a track.
 - A device is identified by user, platform and model: two phones of the same model on one account count as one device.
 - On the remote, next and previous act on a playlist being played in order; they do nothing on a single track or an event.
 - An event queue holds at most 200 waiting tracks, a playlist 500.

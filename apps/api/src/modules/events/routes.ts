@@ -249,9 +249,9 @@ export const eventsRoutes =
 			'/events/:id/next',
 			{
 				schema: {
-					summary: 'Skip to the most voted track (owner)',
+					summary: 'Skip to the most voted track (owner or delegate)',
 					description:
-						'currentEntryId is the entry the caller saw playing; 409 STALE if it already changed.',
+						"The owner, or a friend with an active control grant on one of the owner's devices. currentEntryId is the entry the caller saw playing; 409 STALE if it already changed.",
 					tags,
 					security,
 					params: EventIdParams,

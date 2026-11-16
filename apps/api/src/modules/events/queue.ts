@@ -12,7 +12,7 @@ import { isUniqueViolation } from '../auth/service.js';
 import type { CatalogService } from '../catalog/service.js';
 import { toTrack } from '../catalog/service.js';
 import type { Realtime } from '../realtime/server.js';
-import { loadOwned, loadVisible, voteRefusal } from './access.js';
+import { loadSkippable, loadVisible, voteRefusal } from './access.js';
 
 const BROADCAST_EVERY_MS = 200;
 const RETRY_MS = 1000;
@@ -244,7 +244,7 @@ export function createEventQueue({
 	}
 
 	async function next(userId: string, eventId: string, currentEntryId: string | null) {
-		await loadOwned(prisma, eventId, userId);
+		await loadSkippable(prisma, eventId, userId);
 		if (!(await advance(eventId, currentEntryId))) {
 			throw httpError(409, EventErrorCode.Stale, 'The track already changed');
 		}

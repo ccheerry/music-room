@@ -5443,6 +5443,9 @@
 										},
 										"canVote": {
 											"type": "boolean"
+										},
+										"canSkip": {
+											"type": "boolean"
 										}
 									},
 									"required": [
@@ -5454,7 +5457,8 @@
 										"isOwner",
 										"invited",
 										"zone",
-										"canVote"
+										"canVote",
+										"canSkip"
 									],
 									"additionalProperties": false,
 									"example": {
@@ -5469,7 +5473,8 @@
 										"isOwner": false,
 										"invited": true,
 										"zone": null,
-										"canVote": true
+										"canVote": true,
+										"canSkip": true
 									}
 								}
 							}
@@ -5713,6 +5718,9 @@
 										},
 										"canVote": {
 											"type": "boolean"
+										},
+										"canSkip": {
+											"type": "boolean"
 										}
 									},
 									"required": [
@@ -5724,7 +5732,8 @@
 										"isOwner",
 										"invited",
 										"zone",
-										"canVote"
+										"canVote",
+										"canSkip"
 									],
 									"additionalProperties": false,
 									"example": {
@@ -5739,7 +5748,8 @@
 										"isOwner": false,
 										"invited": true,
 										"zone": null,
-										"canVote": true
+										"canVote": true,
+										"canSkip": true
 									}
 								}
 							}
@@ -6101,6 +6111,9 @@
 										},
 										"canVote": {
 											"type": "boolean"
+										},
+										"canSkip": {
+											"type": "boolean"
 										}
 									},
 									"required": [
@@ -6112,7 +6125,8 @@
 										"isOwner",
 										"invited",
 										"zone",
-										"canVote"
+										"canVote",
+										"canSkip"
 									],
 									"additionalProperties": false,
 									"example": {
@@ -6127,7 +6141,8 @@
 										"isOwner": false,
 										"invited": true,
 										"zone": null,
-										"canVote": true
+										"canVote": true,
+										"canSkip": true
 									}
 								}
 							}
@@ -9446,11 +9461,11 @@
 		},
 		"/api/v1/events/{id}/next": {
 			"post": {
-				"summary": "Skip to the most voted track (owner)",
+				"summary": "Skip to the most voted track (owner or delegate)",
 				"tags": [
 					"events"
 				],
-				"description": "currentEntryId is the entry the caller saw playing; 409 STALE if it already changed.",
+				"description": "The owner, or a friend with an active control grant on one of the owner's devices. currentEntryId is the entry the caller saw playing; 409 STALE if it already changed.",
 				"requestBody": {
 					"required": true,
 					"content": {

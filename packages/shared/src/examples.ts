@@ -147,7 +147,7 @@ example(events.CreateEventBody, {
 });
 example(events.UpdateEventBody, { voteLicense: 'LOCATION', zone });
 example(events.EventList, { items: [eventSummary], hasMore: false });
-example(events.EventDetail, { ...eventSummary, zone: null, canVote: true });
+example(events.EventDetail, { ...eventSummary, zone: null, canVote: true, canSkip: true });
 example(events.EventStateForUser, {
 	eventId: ID.event,
 	version: 7,

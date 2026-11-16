@@ -245,11 +245,40 @@ describe('playback', () => {
 		);
 	});
 
-	it('only the owner skips', async () => {
-		const { id } = await eventWithQueue(1);
-		const [other] = (await createUsers(t, 1)) as [TestUser];
-		const res = await call(t, 'POST', `/events/${id}/next`, other, { currentEntryId: null });
-		expect(res.statusCode).toBe(403);
+	it('the owner and friends controlling one of their devices skip, nobody else', async () => {
+		const { id } = await eventWithQueue(3);
+		const [delegate, lapsed, stranger] = (await createUsers(t, 3)) as [
+			TestUser,
+			TestUser,
+			TestUser,
+		];
+		const device = await t.prisma.device.findFirstOrThrow({ where: { userId: owner.id } });
+		await t.prisma.controlGrant.createMany({
+			data: [
+				{ deviceId: device.id, granteeId: delegate.id },
+				{
+					deviceId: device.id,
+					granteeId: lapsed.id,
+					expiresAt: new Date(Date.now() - 1000),
+				},
+			],
+		});
+		const skip = async (user: TestUser) =>
+			call(t, 'POST', `/events/${id}/next`, user, {
+				currentEntryId: (await getState(owner, id)).current!.entryId,
+			});
+
+		expect((await skip(stranger)).statusCode).toBe(403);
+		expect((await skip(lapsed)).statusCode).toBe(403);
+		expect((await skip(delegate)).statusCode).toBe(200);
+		expect((await skip(owner)).statusCode).toBe(200);
+		const detail = async (user: TestUser) =>
+			(await call(t, 'GET', `/events/${id}`, user)).json().canSkip;
+		expect([await detail(owner), await detail(delegate), await detail(stranger)]).toEqual([
+			true,
+			true,
+			false,
+		]);
 	});
 });
 

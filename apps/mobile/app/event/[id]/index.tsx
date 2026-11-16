@@ -76,7 +76,7 @@ export default function EventScreen() {
 				</ThemedText>
 			)}
 			<NowPlayingCard current={state.data?.current ?? null} />
-			{e?.isOwner && (
+			{e?.canSkip && (
 				<Button
 					label="Skip track"
 					variant="secondary"
