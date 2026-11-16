@@ -47,3 +47,21 @@ jest.mock('react-native-reanimated', () => {
 	const { View } = jest.requireActual('react-native');
 	return { __esModule: true, default: { View }, LinearTransition: {} };
 });
+
+// Gestures need the native handlers: lists render flat, swipe and drag do nothing.
+jest.mock('react-native-gesture-handler', () => {
+	const { View } = jest.requireActual('react-native');
+	return { GestureHandlerRootView: View };
+});
+jest.mock('react-native-gesture-handler/ReanimatedSwipeable', () => ({
+	__esModule: true,
+	default: ({ children }: { children: unknown }) => children,
+}));
+jest.mock('react-native-reorderable-list', () => {
+	const { FlatList, ScrollView } = jest.requireActual('react-native');
+	return {
+		ScrollViewContainer: ScrollView,
+		NestedReorderableList: FlatList,
+		useReorderableDrag: () => jest.fn(),
+	};
+});

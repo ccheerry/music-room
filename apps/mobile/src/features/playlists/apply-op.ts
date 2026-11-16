@@ -48,3 +48,14 @@ export function afterForUp(entries: PlaylistEntry[], index: number): string | nu
 export function afterForDown(entries: PlaylistEntry[], index: number): string | null | undefined {
 	return index >= entries.length - 1 ? undefined : entries[index + 1]!.id;
 }
+
+// Entry the dragged one lands after once dropped at `to`; undefined when nothing moved.
+export function afterForDrop(
+	entries: PlaylistEntry[],
+	from: number,
+	to: number,
+): string | null | undefined {
+	if (from === to) return undefined;
+	const rest = entries.filter((_, i) => i !== from);
+	return to === 0 ? null : rest[to - 1]!.id;
+}

@@ -106,7 +106,7 @@ To open the app: run `make dev` (or `make mobile` when the API runs in Docker) a
 The app has five tabs:
 
 - **Events** (Music Track Vote): discover, invited and own events; create one, suggest tracks, vote, follow the ranked queue live. The owner's phone plays the current track; the server advances to the most voted track when a preview ends.
-- **Playlists** (Music Playlist Editor): own, shared and public playlists; add, move and remove tracks while others do the same; "Play in order" plays the playlist on this phone.
+- **Playlists** (Music Playlist Editor): own, shared and public playlists; add tracks, drag them to reorder (handle on the right) and swipe left to remove, while others do the same; screen readers get "move up", "move down" and "remove" actions; "Play in order" plays the playlist on this phone.
 - **Search**: Deezer search; tapping a result plays its 30 second preview in the mini player, which stays visible above the tabs.
 - **Control** (Music Control Delegation): devices this user may control, with a remote (play, pause, next, previous, volume) for each.
 - **Profile**: the three profile tiers and music preferences, plus friends, devices and their grants, linked accounts, password and log out.
@@ -215,7 +215,6 @@ Details are in `docs/SECURITY.md`.
 ## Known limitations
 
 - The voting zone of a location event is placed at the phone's current position; there is no map picker.
-- Playlist entries are reordered with up / down buttons rather than drag and drop.
 - Location checks trust the coordinates sent by the phone, which can be spoofed.
 - Rate limits, login backoff and catalog caches are kept in memory, per API instance.
 - Event playback timers and broadcast coalescing live in the API process; running several API instances needs a shared adapter (see the load test report).

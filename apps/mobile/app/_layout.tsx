@@ -1,7 +1,8 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { DarkTheme, DefaultTheme, Link, Stack, ThemeProvider } from 'expo-router';
 import { useEffect } from 'react';
-import { useColorScheme } from 'react-native';
+import { StyleSheet, useColorScheme } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { queryClient } from '@/api/query-client';
 import { ThemedText } from '@/components/themed-text';
@@ -29,57 +30,77 @@ export default function RootLayout() {
 	const signedIn = status === 'signedIn';
 
 	return (
-		<QueryClientProvider client={queryClient}>
-			<ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-				<Stack screenOptions={{ headerRight: settingsLink }}>
-					{/* Explicit targets: the default picks the first free route by file name. */}
-					<Stack.Protected guard={signedIn} redirectTo="/welcome">
-						<Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-						<Stack.Screen name="user/[id]" options={{ title: 'Profile' }} />
-						<Stack.Screen name="friends" options={{ title: 'Friends' }} />
-						<Stack.Screen name="devices" options={{ title: 'My devices' }} />
-						<Stack.Screen name="device/[id]" options={{ title: 'Device' }} />
-						<Stack.Screen name="remote/[id]" options={{ title: 'Remote' }} />
-						<Stack.Screen name="event/new" options={{ title: 'New event' }} />
-						<Stack.Screen name="event/[id]/index" options={{ title: 'Event' }} />
-						<Stack.Screen name="event/[id]/edit" options={{ title: 'Edit event' }} />
+		<GestureHandlerRootView style={StyleSheet.absoluteFill}>
+			<QueryClientProvider client={queryClient}>
+				<ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+					<Stack screenOptions={{ headerRight: settingsLink }}>
+						{/* Explicit targets: the default picks the first free route by file name. */}
+						<Stack.Protected guard={signedIn} redirectTo="/welcome">
+							<Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+							<Stack.Screen name="user/[id]" options={{ title: 'Profile' }} />
+							<Stack.Screen name="friends" options={{ title: 'Friends' }} />
+							<Stack.Screen name="devices" options={{ title: 'My devices' }} />
+							<Stack.Screen name="device/[id]" options={{ title: 'Device' }} />
+							<Stack.Screen name="remote/[id]" options={{ title: 'Remote' }} />
+							<Stack.Screen name="event/new" options={{ title: 'New event' }} />
+							<Stack.Screen name="event/[id]/index" options={{ title: 'Event' }} />
+							<Stack.Screen
+								name="event/[id]/edit"
+								options={{ title: 'Edit event' }}
+							/>
+							<Stack.Screen
+								name="event/[id]/suggest"
+								options={{ title: 'Suggest a track' }}
+							/>
+							<Stack.Screen name="event/[id]/invite" options={{ title: 'Invite' }} />
+							<Stack.Screen name="playlist/new" options={{ title: 'New playlist' }} />
+							<Stack.Screen
+								name="playlist/[id]/index"
+								options={{ title: 'Playlist' }}
+							/>
+							<Stack.Screen
+								name="playlist/[id]/add"
+								options={{ title: 'Add a track' }}
+							/>
+							<Stack.Screen
+								name="playlist/[id]/members"
+								options={{ title: 'Members' }}
+							/>
+							<Stack.Screen
+								name="change-password"
+								options={{ title: 'Change password' }}
+							/>
+							<Stack.Screen
+								name="linked-accounts"
+								options={{ title: 'Linked accounts' }}
+							/>
+						</Stack.Protected>
+						<Stack.Protected guard={!signedIn} redirectTo="/">
+							<Stack.Screen name="welcome" options={{ title: 'Welcome' }} />
+							<Stack.Screen name="log-in" options={{ title: 'Log in' }} />
+							<Stack.Screen name="sign-up" options={{ title: 'Create an account' }} />
+							<Stack.Screen
+								name="check-inbox"
+								options={{ title: 'Check your inbox' }}
+							/>
+							<Stack.Screen
+								name="forgot-password"
+								options={{ title: 'Forgot password' }}
+							/>
+							<Stack.Screen
+								name="account-exists"
+								options={{ title: 'Account exists' }}
+							/>
+						</Stack.Protected>
 						<Stack.Screen
-							name="event/[id]/suggest"
-							options={{ title: 'Suggest a track' }}
+							name="settings"
+							options={{ title: 'Settings', headerRight: undefined }}
 						/>
-						<Stack.Screen name="event/[id]/invite" options={{ title: 'Invite' }} />
-						<Stack.Screen name="playlist/new" options={{ title: 'New playlist' }} />
-						<Stack.Screen name="playlist/[id]/index" options={{ title: 'Playlist' }} />
-						<Stack.Screen name="playlist/[id]/add" options={{ title: 'Add a track' }} />
-						<Stack.Screen name="playlist/[id]/members" options={{ title: 'Members' }} />
-						<Stack.Screen
-							name="change-password"
-							options={{ title: 'Change password' }}
-						/>
-						<Stack.Screen
-							name="linked-accounts"
-							options={{ title: 'Linked accounts' }}
-						/>
-					</Stack.Protected>
-					<Stack.Protected guard={!signedIn} redirectTo="/">
-						<Stack.Screen name="welcome" options={{ title: 'Welcome' }} />
-						<Stack.Screen name="log-in" options={{ title: 'Log in' }} />
-						<Stack.Screen name="sign-up" options={{ title: 'Create an account' }} />
-						<Stack.Screen name="check-inbox" options={{ title: 'Check your inbox' }} />
-						<Stack.Screen
-							name="forgot-password"
-							options={{ title: 'Forgot password' }}
-						/>
-						<Stack.Screen name="account-exists" options={{ title: 'Account exists' }} />
-					</Stack.Protected>
-					<Stack.Screen
-						name="settings"
-						options={{ title: 'Settings', headerRight: undefined }}
-					/>
-					<Stack.Screen name="verify" options={{ title: 'Confirm email' }} />
-					<Stack.Screen name="reset" options={{ title: 'New password' }} />
-				</Stack>
-			</ThemeProvider>
-		</QueryClientProvider>
+						<Stack.Screen name="verify" options={{ title: 'Confirm email' }} />
+						<Stack.Screen name="reset" options={{ title: 'New password' }} />
+					</Stack>
+				</ThemeProvider>
+			</QueryClientProvider>
+		</GestureHandlerRootView>
 	);
 }

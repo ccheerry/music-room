@@ -60,7 +60,7 @@ export default function PlaylistScreen() {
 	}
 
 	return (
-		<Screen>
+		<Screen reorderable>
 			<Stack.Screen options={{ title: p?.name ?? 'Playlist' }} />
 			<ConnectionBanner />
 			{p && (

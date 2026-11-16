@@ -2,7 +2,7 @@ import type { PlaylistEntry, PlaylistState, Track } from '@music-room/shared';
 
 import { playlistKeys, editPlaylist } from '@/api/playlists';
 import { queryClient } from '@/api/query-client';
-import { afterForDown, afterForUp, applyOp } from '@/features/playlists/apply-op';
+import { afterForDown, afterForDrop, afterForUp, applyOp } from '@/features/playlists/apply-op';
 import { useSession } from '@/stores/session';
 import { reply } from './fixtures';
 
@@ -67,6 +67,15 @@ describe('applyOp', () => {
 		expect(afterForUp(STATE.entries, 2)).toBe(A);
 		expect(afterForDown(STATE.entries, 0)).toBe(B);
 		expect(afterForDown(STATE.entries, 2)).toBeUndefined();
+	});
+
+	it('computes the drop target of a drag', () => {
+		// [A, B, C]
+		expect(afterForDrop(STATE.entries, 2, 0)).toBeNull();
+		expect(afterForDrop(STATE.entries, 0, 2)).toBe(C);
+		expect(afterForDrop(STATE.entries, 0, 1)).toBe(B);
+		expect(afterForDrop(STATE.entries, 2, 1)).toBe(A);
+		expect(afterForDrop(STATE.entries, 1, 1)).toBeUndefined();
 	});
 });
 
