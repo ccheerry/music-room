@@ -181,7 +181,8 @@ make audit     # npm audit of the API dependencies, no tracked .env file
 make lint      # eslint + prettier check + type check
 make format    # fix formatting
 make docs      # export docs/openapi.json (database up)
-make mobile    # Expo dev server
+make mobile    # Expo dev server for Expo Go
+make mobile-android  # development build (social login) on Android
 make loadtest  # Artillery scenarios, reports in loadtest/reports
 make clean     # stop Docker and remove builds
 make fclean    # also remove volumes, local images and node_modules
