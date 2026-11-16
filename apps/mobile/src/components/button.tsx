@@ -27,7 +27,7 @@ export function Button({ label, onPress, disabled, variant = 'primary' }: Button
 				(pressed || disabled) && styles.dimmed,
 			]}
 		>
-			<ThemedText type="smallBold" style={primary && styles.primaryLabel}>
+			<ThemedText type="smallBold" themeColor={primary ? 'background' : undefined}>
 				{label}
 			</ThemedText>
 		</Pressable>
@@ -42,5 +42,4 @@ const styles = StyleSheet.create({
 		paddingVertical: Spacing.two,
 	},
 	dimmed: { opacity: 0.6 },
-	primaryLabel: { color: '#ffffff' },
 });

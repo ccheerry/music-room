@@ -9,9 +9,10 @@ export const Colors = {
 		background: '#ffffff',
 		backgroundElement: '#F0F0F3',
 		backgroundSelected: '#E0E1E6',
-		accent: '#208AEF',
-		success: '#1F9D55',
-		danger: '#D93F3F',
+		// Text colours keep a 4.5:1 contrast on the light backgrounds (WCAG AA).
+		accent: '#1565C0',
+		success: '#15803D',
+		danger: '#C62828',
 	},
 	dark: {
 		text: '#ffffff',

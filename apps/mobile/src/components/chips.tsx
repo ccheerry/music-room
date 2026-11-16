@@ -31,7 +31,7 @@ export function Chips({ values, onPress, selected, hint }: ChipsProps) {
 							{ backgroundColor: on ? theme.accent : theme.backgroundSelected },
 						]}
 					>
-						<ThemedText type="small" style={on && styles.onLabel}>
+						<ThemedText type="small" themeColor={on ? 'background' : undefined}>
 							{value}
 						</ThemedText>
 					</Pressable>
@@ -48,5 +48,4 @@ const styles = StyleSheet.create({
 		paddingHorizontal: Spacing.two,
 		paddingVertical: Spacing.one,
 	},
-	onLabel: { color: '#ffffff' },
 });
