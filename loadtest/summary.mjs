@@ -11,12 +11,12 @@ function healthOf(name) {
 	const path = `${dir}/${name}.health.jsonl`;
 	if (!existsSync(path)) return { loop: '-', rss: '-', db: '-', missed: '-' };
 	const samples = readFileSync(path, 'utf8').trim().split('\n').filter(Boolean).map(JSON.parse);
-	const ok = samples.filter((s) => !s.missed);
+	const ok = samples.filter((s) => !s.missed && s.eventLoopDelayMs);
 	return {
 		loop: max(ok.map((s) => s.eventLoopDelayMs.p99)),
 		rss: max(ok.map((s) => s.rssMb)),
 		db: max(ok.map((s) => s.dbConnections ?? 0)),
-		missed: samples.length - ok.length,
+		missed: samples.filter((s) => s.missed).length,
 	};
 }
 
