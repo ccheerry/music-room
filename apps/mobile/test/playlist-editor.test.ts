@@ -77,6 +77,15 @@ describe('applyOp', () => {
 		expect(afterForDrop(STATE.entries, 2, 1)).toBe(A);
 		expect(afterForDrop(STATE.entries, 1, 1)).toBeUndefined();
 	});
+
+	it('never anchors a drop on an entry that is still pending', () => {
+		const withPending = [entry(A, 1), entry('pending-1', 9), entry(B, 2)];
+		// B dropped right below the pending entry lands after A.
+		expect(afterForDrop(withPending, 2, 2)).toBeUndefined();
+		expect(afterForDrop([...withPending, entry(C, 3)], 3, 2)).toBe(A);
+		expect(afterForDrop([entry('pending-1', 9), entry(B, 2)], 1, 1)).toBeUndefined();
+		expect(afterForDrop([entry('pending-1', 9), entry(B, 2), entry(C, 3)], 2, 1)).toBeNull();
+	});
 });
 
 describe('editPlaylist', () => {

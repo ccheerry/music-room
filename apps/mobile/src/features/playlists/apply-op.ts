@@ -56,6 +56,7 @@ export function afterForDrop(
 	to: number,
 ): string | null | undefined {
 	if (from === to) return undefined;
-	const rest = entries.filter((_, i) => i !== from);
-	return to === 0 ? null : rest[to - 1]!.id;
+	// Optimistic entries have no server id yet: anchor on the closest real entry above.
+	const above = entries.filter((_, i) => i !== from).slice(0, to);
+	return above.findLast((e) => !e.id.startsWith('pending-'))?.id ?? null;
 }

@@ -114,7 +114,11 @@ export function EventForm({ initial, submitLabel, onSubmit }: EventFormProps) {
 								: 'Stand at the venue and set the place from your position.'}
 					</ThemedText>
 					{mapAvailable && (
-						<ZoneMap place={place} radiusM={Number(radius) || 0} onChange={setPlace} />
+						<ZoneMap
+							place={place}
+							radiusM={Math.max(0, Number(radius) || 0)}
+							onChange={setPlace}
+						/>
 					)}
 					<Button label="Use my current position" variant="secondary" onPress={locate} />
 					<ThemedText type="smallBold">Radius (metres)</ThemedText>
