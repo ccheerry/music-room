@@ -9,7 +9,7 @@
 		"userInterfaceStyle": "automatic",
 		"ios": {
 			"icon": "./assets/expo.icon",
-			"bundleIdentifier": "com.musicroom.app"
+			"bundleIdentifier": "com.ccheerry.musicroom"
 		},
 		"android": {
 			"adaptiveIcon": {
@@ -19,7 +19,7 @@
 				"monochromeImage": "./assets/images/android-icon-monochrome.png"
 			},
 			"predictiveBackGestureEnabled": false,
-			"package": "com.musicroom.app"
+			"package": "com.ccheerry.musicroom"
 		},
 		"web": {
 			"output": "server",

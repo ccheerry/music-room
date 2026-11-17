@@ -116,7 +116,7 @@ Every feature except two works in Expo Go. Social login and the links in mails (
 
 ### Development build
 
-The development build is the app compiled with its own id, `com.musicroom.app`, and the URL schemes the OAuth providers redirect to (`com.musicroom.app:/oauthredirect` for Google, `fb<app id>://authorize` for Facebook). The native projects are generated from `apps/mobile/app.json` and `apps/mobile/app.config.ts` and are not committed.
+The development build is the app compiled with its own id, `com.ccheerry.musicroom`, and the URL schemes the OAuth providers redirect to (`com.ccheerry.musicroom:/oauthredirect` for Google, `fb<app id>://authorize` for Facebook). The native projects are generated from `apps/mobile/app.json` and `apps/mobile/app.config.ts` and are not committed.
 
 - Android: Android SDK with `ANDROID_HOME` set, then `make mobile-android` with a phone in USB debugging or an emulator running. It builds, installs and starts Metro.
 - iOS on macOS: Xcode, then `make mobile-ios` with the iPhone plugged in. A free Apple ID is enough to run it on your own iPhone.
@@ -138,8 +138,8 @@ Registering the build with the providers:
 
 | Provider | Where | Values |
 |---|---|---|
-| Google | Google Cloud console, *Google Auth Platform → Clients*: one Web, one Android and one iOS client | Android: package `com.musicroom.app`, SHA-1 of the debug key `5E:8F:16:06:2E:A3:CD:2C:4A:0D:54:78:76:BA:A6:F3:8C:AB:F6:25`. iOS: bundle id `com.musicroom.app` |
-| Facebook | Meta for Developers, app with Facebook Login, *Settings → Basic → Add platform* | Android: package `com.musicroom.app`, class `com.musicroom.app.MainActivity`, key hash `Xo8WBi6jzSxKDVR4drqm84yr9iU=`. iOS: bundle id `com.musicroom.app` |
+| Google | Google Cloud console, *Google Auth Platform → Clients*: one Web, one Android and one iOS client | Android: package `com.ccheerry.musicroom`, SHA-1 of the debug key `5E:8F:16:06:2E:A3:CD:2C:4A:0D:54:78:76:BA:A6:F3:8C:AB:F6:25`. iOS: bundle id `com.ccheerry.musicroom` |
+| Facebook | Meta for Developers, app with Facebook Login, *Settings → Basic → Add platform* | Android: package `com.ccheerry.musicroom`, class `com.ccheerry.musicroom.MainActivity`, key hash `Xo8WBi6jzSxKDVR4drqm84yr9iU=`. iOS: bundle id `com.ccheerry.musicroom` |
 | Google Maps (optional) | Google Cloud console, enable *Maps SDK for Android*, create an API key restricted to the Android app | Same package and SHA-1 |
 
 The three Google client ids go in `GOOGLE_CLIENT_IDS` (API) and in the matching `EXPO_PUBLIC_GOOGLE_*_CLIENT_ID` (app); the Facebook app id in `FACEBOOK_APP_ID` and `EXPO_PUBLIC_FACEBOOK_APP_ID`, the secret only in `FACEBOOK_APP_SECRET`. Rebuild the app after changing an `EXPO_PUBLIC_` value that ends up in the native config (Facebook id, maps key).
