@@ -131,7 +131,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
 		signAccess: (claims) => app.jwt.sign(claims),
 		linkBase: env.APP_LINK_URL,
 	});
-	await app.register(healthRoutes(prisma), { prefix: API_PREFIX });
+	await app.register(healthRoutes(prisma, env.HEALTH_VERBOSE), { prefix: API_PREFIX });
 	await app.register(authRoutes(auth, env.AUTH_RATE_LIMIT_MAX), { prefix: API_PREFIX });
 	// Ending a friendship revokes device control both ways.
 	let onUnfriend: (a: string, b: string) => Promise<void> = async () => undefined;

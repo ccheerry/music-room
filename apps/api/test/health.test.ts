@@ -20,10 +20,21 @@ describe('GET /api/v1/health', () => {
 		expect(res.json()).toEqual({ status: 'ok', db: 'ok' });
 	});
 
-	it('adds process metrics only when asked with verbose', async () => {
-		const plain = await app.inject({ method: 'GET', url: '/api/v1/health' });
-		expect(plain.json().metrics).toBeUndefined();
+	it('never adds process metrics unless the server enables them', async () => {
 		const res = await app.inject({ method: 'GET', url: '/api/v1/health?verbose=true' });
+		expect(res.statusCode).toBe(200);
+		expect(res.json().metrics).toBeUndefined();
+	});
+
+	it('adds process metrics only when asked with verbose, once enabled', async () => {
+		const verbose = await buildTestApp({ env: { HEALTH_VERBOSE: 'true' } });
+		const plain = await verbose.app.inject({ method: 'GET', url: '/api/v1/health' });
+		expect(plain.json().metrics).toBeUndefined();
+		const res = await verbose.app.inject({
+			method: 'GET',
+			url: '/api/v1/health?verbose=true',
+		});
+		await closeTestApp(verbose);
 		expect(res.statusCode).toBe(200);
 		const { metrics } = res.json();
 		expect(metrics.rssMb).toBeGreaterThan(0);

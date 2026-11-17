@@ -34,6 +34,11 @@ const EnvSchema = z.object({
 		.enum(['true', 'false'])
 		.default('false')
 		.transform((v) => v === 'true'),
+	// Lets GET /health?verbose answer process metrics; only for load tests, they are public.
+	HEALTH_VERBOSE: z
+		.enum(['true', 'false'])
+		.default('false')
+		.transform((v) => v === 'true'),
 	// Requests per minute for one user (or one address when logged out).
 	RATE_LIMIT_MAX: z.coerce.number().int().positive().default(300),
 	// Per address and per route (login, sign-up, resend, forgot password), every 15 minutes.

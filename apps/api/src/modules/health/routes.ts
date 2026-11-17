@@ -8,7 +8,7 @@ const NS_PER_MS = 1e6;
 const RESOLUTION_MS = 10;
 
 export const healthRoutes =
-	(prisma: PrismaClient): FastifyPluginAsyncZod =>
+	(prisma: PrismaClient, verboseEnabled: boolean): FastifyPluginAsyncZod =>
 	async (app) => {
 		const loopDelay = monitorEventLoopDelay({ resolution: RESOLUTION_MS });
 		loopDelay.enable();
@@ -43,14 +43,15 @@ export const healthRoutes =
 				schema: {
 					summary: 'Liveness and database check',
 					description:
-						'Public. 503 when the database does not answer. With `verbose=true` it adds process figures used during load tests: memory, database connections and the event-loop delay since the previous verbose call.',
+						'Public. 503 when the database does not answer. With `verbose=true`, and only when the server runs with `HEALTH_VERBOSE=true`, it adds process figures used during load tests: memory, database connections and the event-loop delay since the previous verbose call.',
 					tags: ['health'],
 					querystring: HealthQuery,
 					response: { 200: HealthResponse, 503: HealthResponse, 500: ErrorBody },
 				},
 			},
 			async (req, reply) => {
-				const extra = req.query.verbose ? { metrics: await metrics() } : {};
+				const extra =
+					verboseEnabled && req.query.verbose ? { metrics: await metrics() } : {};
 				try {
 					await prisma.$queryRaw`SELECT 1`;
 					return { status: 'ok' as const, db: 'ok' as const, ...extra };

@@ -157,9 +157,13 @@ kind of machine: thousands of users for a low-end server, far fewer on smaller h
 ## Reproducing
 
 ```bash
+# in .env: HEALTH_VERBOSE=true, so the runs can sample event-loop delay and memory
 make install up                  # API, PostgreSQL and Mailpit in Docker
 make loadtest LOADTEST_RATE=12   # the four scenarios, reports in loadtest/reports/*.json
 ```
 
 Each report holds the response time percentiles, the request rates and the result of the two
-pass criteria.
+pass criteria. `loadtest/reports/<scenario>.health.jsonl` holds the samples of
+`/health?verbose` taken every 2 s, and `loadtest/reports/summary.md` sums everything up:
+failed users, event-loop delay, memory and database connections. Set `HEALTH_VERBOSE` back
+to `false` afterwards: the metrics are public.

@@ -94,6 +94,7 @@ loadtest: ## Run the Artillery scenarios against LOADTEST_TARGET, reports in loa
 	for s in $(LOADTEST_SCENARIOS); do \
 		(cd apps/api && $(LOAD_ENV) && npx tsx scripts/loadtest-seed.ts) || exit 1; \
 		node loadtest/monitor.mjs $(LOADTEST_TARGET) loadtest/reports/$$s.health.jsonl & monitor=$$!; \
+		trap 'kill $$monitor 2>/dev/null' EXIT INT; \
 		LOADTEST_TARGET=$(LOADTEST_TARGET) LOADTEST_RATE=$(LOADTEST_RATE) npx artillery run \
 			--config loadtest/common.yml --output loadtest/reports/$$s.json loadtest/$$s.yml; \
 		kill $$monitor; \
