@@ -172,7 +172,7 @@ make install   # install every workspace, build shared, generate the Prisma clie
 make up        # start postgres, mailpit and the api in Docker (migrations applied on start)
 make down      # stop the Docker stack
 make setup     # install, migrate and seed whatever is missing (postgres and mailpit in Docker)
-make dev       # setup, then api in watch mode + Expo
+make dev       # setup, stop the api container, then api in watch mode + Expo
 make migrate   # apply Prisma migrations
 make seed      # load demo data
 make test      # shared, api and mobile test suites

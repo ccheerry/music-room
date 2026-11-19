@@ -59,7 +59,7 @@ cp .env.example .env
 make install up seed
 ```
 
-`make up` runs the API in Docker instead, on the same port 3000: use either `make up` or `make dev`, not both at once. The container applies pending migrations by itself when it starts, so `make install up` is enough on a clean machine; `make seed` then adds the demo data.
+`make up` runs the API in Docker instead, on the same port 3000. `make dev` stops that container before starting the watch-mode API, so switching from `make up` to `make dev` needs nothing else; the other way round, stop `make dev` first. The container applies pending migrations by itself when it starts, so `make install up` is enough on a clean machine; `make seed` then adds the demo data.
 
 `.env.example` lists the variables to set. `.env` is git-ignored, and the API refuses to start if a required variable is missing or malformed.
 
@@ -152,7 +152,7 @@ make install   # install every workspace, build shared, generate the Prisma clie
 make up        # start postgres, mailpit and the api in Docker (migrations applied on start)
 make down      # stop the Docker stack
 make setup     # install, migrate and seed whatever is missing (postgres and mailpit in Docker)
-make dev       # setup, then api in watch mode + Expo
+make dev       # setup, stop the api container, then api in watch mode + Expo
 make migrate   # apply Prisma migrations
 make seed      # load demo data
 make test      # shared, api and mobile test suites

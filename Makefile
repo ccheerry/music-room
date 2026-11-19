@@ -39,7 +39,9 @@ up: ## Start postgres, mailpit and the api in Docker, and wait until the api ans
 down: ## Stop the Docker stack
 	docker compose down
 
-dev: setup ## Api in watch mode + Expo (runs setup first)
+# The api container holds port 3000: stop it so the watch-mode api can bind it.
+dev: setup ## Api in watch mode + Expo (runs setup, stops the api container)
+	docker compose stop api
 	trap 'kill 0' INT; $(API) dev & $(ROOT_ENV) && npm -w @music-room/mobile run start
 
 migrate: ## Apply Prisma migrations
